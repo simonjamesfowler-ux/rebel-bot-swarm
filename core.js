@@ -163,6 +163,58 @@ function ownPictures(dir) {
   return out;
 }
 
+const HELPER_SECS = 120;
+// Running helpers: <project>/<session>/subagents/*.jsonl written in the last 2 minutes; first 4000 bytes only ("You are <Name>").
+function helperNames(PROJS) {
+  const out = {}, now = Date.now();
+  for (const PROJ of [].concat(PROJS)) {
+  let sess = [];
+  try { sess = fs.readdirSync(PROJ); } catch (e) { continue; }
+  for (const s of sess) {
+    const sub = path.join(PROJ, s, "subagents");
+    let files = [];
+    try { files = fs.readdirSync(sub); } catch (e) { continue; }
+    for (const fn of files) {
+      if (!fn.endsWith(".jsonl")) continue;
+      const p = path.join(sub, fn);
+      try {
+        const mt = fs.statSync(p).mtimeMs;
+        if (now - mt > HELPER_SECS * 1000) continue;
+        const fd = fs.openSync(p, "r"), buf = Buffer.alloc(4000);
+        let n = 0;
+        try { n = fs.readSync(fd, buf, 0, 4000, 0); } finally { fs.closeSync(fd); }
+        const m = /"content":"You are ([A-Z][\w'-]*)/.exec(buf.slice(0, n).toString("utf8"));
+        if (m) out[m[1].toLowerCase()] = Math.max(out[m[1].toLowerCase()] || 0, mt);
+      } catch (e) { continue; }
+    }
+  }
+  }
+  return out;
+}
+const firstWord = n => (String(n).split(" - ")[0].split(" (")[0].trim().split(/\s+/)[0] || "").toLowerCase();
+function applyHelpers(members, mk, PROJ, agentsDir) {
+  const have = new Set(members.map(m => firstWord(m.name)));
+  if (agentsDir && mk) {
+    let names = [];
+    try { names = fs.readdirSync(agentsDir); } catch (e) { names = []; }
+    for (const fn of names) {
+      if (!fn.endsWith(".md")) continue;
+      const n = fn.slice(0, -3).toLowerCase();
+      if (have.has(n)) continue;
+      let head = "";
+      try { const fd = fs.openSync(path.join(agentsDir, fn), "r"), b = Buffer.alloc(1500); try { head = b.slice(0, fs.readSync(fd, b, 0, 1500, 0)).toString("utf8"); } finally { fs.closeSync(fd); } } catch (e) { continue; }
+      const d = /^description:\s*(.+)$/m.exec(head);
+      members.push(mk(n[0].toUpperCase() + n.slice(1), d ? d[1].trim().slice(0, 200) : ""));
+    }
+  }
+  const run = helperNames(PROJ);
+  for (const m of members) {
+    if (m.status === "closed") m.status = "ready";
+    const f = firstWord(m.name);
+    if (run[f] && (m.status === "ready" || m.status === "idle")) { m.status = "working"; m.since = fmt(new Date(run[f])); m.extra = "helper running"; }
+  }
+}
+
 /** cfg: {boardFile, privateMembers[], scope: "workspace"|"all", workspaceFolders[], avatarsFolder, requestsFolder}
  *  picUri(path) -> link the webview may load (only inside avatarsFolder). */
 function buildState(cfg, picUri) {
@@ -190,6 +242,7 @@ function buildState(cfg, picUri) {
     if (match) used.add(match);
   }
   for (const [sid, d] of Object.entries(teamLive)) if (!used.has(sid)) members.push(member(d.name || sid.slice(0, 8), b.found ? "(not on the board)" : "", d, sid, b));
+  applyHelpers(members, null, dirs, null);
   const pics = ownPictures(expandHome(cfg.avatarsFolder));
   for (const m of members) {
     const n = m.name.trim().toLowerCase(), keys = [n, n.split(" - ")[0].split(" (")[0].trim(), n.split(/\s+/)[0]];

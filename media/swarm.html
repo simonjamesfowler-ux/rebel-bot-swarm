@@ -2,8 +2,8 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rebel Bot Swarm</title>
 <style>
-:root{--bg:#f4f5f7;--card:#fff;--ink:#1d2430;--muted:#6b7580;--line:#dde1e6;--work:#1f9d55;--idle:#8a94a0;--wait:#d97706;--closed:#c4c9cf;--accent:#1f3a5f}
-@media (prefers-color-scheme:dark){:root{--bg:#14181e;--card:#1d232b;--ink:#e6e9ed;--muted:#9aa4ae;--line:#2c343e;--closed:#4a535d;--accent:#8fb3e0}}
+:root{--bg:#f4f5f7;--card:#fff;--ink:#1d2430;--muted:#6b7580;--line:#dde1e6;--work:#1f9d55;--idle:#8a94a0;--wait:#d97706;--closed:#c4c9cf;--ready:#3b82c4;--accent:#1f3a5f}
+@media (prefers-color-scheme:dark){:root{--bg:#14181e;--card:#1d232b;--ink:#e6e9ed;--muted:#9aa4ae;--line:#2c343e;--closed:#4a535d;--ready:#6fa8dc;--accent:#8fb3e0}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 Segoe UI,Arial,sans-serif}
 header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
 h1{font-size:18px;margin:0;color:var(--accent)}.muted{color:var(--muted)}.slot{padding:4px 10px;border-radius:12px;background:var(--card);border:1px solid var(--line)}
@@ -71,7 +71,7 @@ header .slot{flex:1 1 300px;min-width:0;overflow:hidden;white-space:nowrap;text-
  <label for="nmjob">The job, in one line (max 200 characters)</label><input id="nmjob" maxlength="200" required autocomplete="off">
  <p id="nmmsg"></p><p><button id="nmsend" class="main" type="submit">Save request</button> <button id="nmcancel" type="button">Close</button></p></form></dialog>
 <script>
-const COL={"working":"var(--work)","idle":"var(--idle)","waiting for you":"var(--wait)","closed":"var(--closed)"};
+const COL={"working":"var(--work)","idle":"var(--idle)","waiting for you":"var(--wait)","ready":"var(--ready)","closed":"var(--closed)"};
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function hash(s){let h=0;for(const ch of s)h=(h*31+ch.charCodeAt(0))>>>0;return h}
 // Avatars: ORIGINAL characters of our own design (space crew, two own alien species, own robots), chosen by the
@@ -200,7 +200,7 @@ function overlay(st){
  if(st==="waiting for you")return `<g class="mv bub"><path d="M70 3 H92 Q98 3 98 9 V21 Q98 27 92 27 H83 L75 34 L77 27 H70 Q64 27 64 21 V9 Q64 3 70 3Z" fill="#fff" ${S(1.9)}/><text x="81" y="22.5" text-anchor="middle" font-size="19" font-weight="800" font-family="Segoe UI,Arial" style="fill:var(--wait)">?</text></g>`;
  if(st==="closed")return `<g class="mv zz" font-family="Segoe UI,Arial" font-weight="800" fill="#c8cede" stroke="${OL}" stroke-width=".6"><text x="74" y="22" font-size="13">z</text><text x="84" y="13" font-size="9">z</text></g>`;
  return ""}
-function avatar(m){const role=roleOf(m.name,m.job),h=hash(m.name),k="a"+h.toString(36),st=m.status,ring=COL[st]||"var(--idle)";
+function avatar(m){const role=roleOf(m.name,m.job),h=hash(m.name),k="a"+h.toString(36),st=m.status==="ready"?"idle":m.status,ring=COL[m.status]||"var(--idle)";
  const [hu]=hsl(okc(m.colour));
  const C={k,col:tone(m.colour),light:tone(m.colour,.2),dark:tone(m.colour,-.16),acc:hx([(hu+160)%360,.75,.6])};
  const defs=`<defs><radialGradient id="bg${k}" cx=".5" cy=".42" r=".62"><stop offset="0" stop-color="${tone(m.colour,-.22)}"/><stop offset="1" stop-color="#070a1a"/></radialGradient>`+
@@ -220,7 +220,7 @@ const VS=typeof acquireVsCodeApi==="function"?acquireVsCodeApi():null;
 const CLOSED_HINT="Closed: reopen this session to send it work";
 function show(i){const m=last.members[i];if(!m)return;
  dlgbody.innerHTML=`<h3>${esc(m.name)}</h3><p>Status: <b>${esc(m.status)}</b> ${esc(m.since)} ${esc(m.extra)}</p>`+
- (m.status==="closed"?`<p><b>${CLOSED_HINT}.</b> A closed tab ends the session: no member can reach it until it is reopened.</p>`:"")+`<p>${esc(m.job)}</p>`+
+ (m.status==="ready"?`<p><b>Ready.</b> Idle and available: the coordinator starts it as a background helper when a job needs it.</p>`:"")+(m.status==="closed"?`<p><b>${CLOSED_HINT}.</b> A closed tab ends the session: no member can reach it until it is reopened.</p>`:"")+`<p>${esc(m.job)}</p>`+
  (m.sid?`<p><b>To open this session:</b> in VS Code, open the Claude Code panel, then its past conversations list, and pick "${esc(m.name)}".<br>
  Or in a terminal: <code>claude --resume ${esc(m.sid)}</code></p>`:`<p>To reopen: in the Claude Code panel, open the past conversations list and pick "${esc(m.name)}" by its title.</p>`)+
  (m.files.length?`<p><b>Files booked:</b><br>${m.files.map(esc).join("<br>")}</p>`:"");dlg.showModal()}
@@ -228,7 +228,7 @@ cards.addEventListener("click",e=>{const c=e.target.closest(".card");if(c)show(+
 dlgclose.addEventListener("click",()=>dlg.close());
 function render(s){last=s;addbtn.hidden=!s.requests;
  slot.textContent="Shared slot: "+(s.holder||"free").replace(/\*/g,"").slice(0,140);upd.textContent="updated "+s.updated+(s.error?"  ERROR "+s.error:"");
- const order={"working":0,"waiting for you":1,"idle":2,"closed":3};
+ const order={"working":0,"waiting for you":1,"idle":2,"ready":2,"closed":3};
  const idx=s.members.map((m,i)=>i).sort((a,b)=>(order[s.members[a].status]??4)-(order[s.members[b].status]??4));
  const ch=idx.map(i=>{const m=s.members[i],cl=m.status==="closed";return `<div class="card ${cl?"closed":""}" data-i="${i}">${avatar(m)}
   <div><div class="name">${esc(m.name)}</div><div class="status" style="color:${COL[m.status]||"var(--idle)"}">${esc(m.status)}${m.since?" · "+esc(m.since):""}</div>

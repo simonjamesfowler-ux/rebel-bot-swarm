@@ -2,7 +2,7 @@
   "name": "rebel-bot-swarm",
   "displayName": "Rebel Bot Swarm",
   "description": "See your Claude Code sessions as a team: status, original avatars, who holds what, and the messages between them. Local only.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "simonjamesfowler-ux",
   "license": "MIT",
   "repository": {
