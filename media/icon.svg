@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Rebel Bot Swarm logo: own design (three small helper bots linked as a swarm). No franchise symbols. -->
+  <rect width="128" height="128" rx="28" fill="#15183a"/>
+  <circle cx="64" cy="66" r="50" fill="#232a63"/>
+  <g fill="#fff"><circle cx="22" cy="24" r="1.6"/><circle cx="104" cy="20" r="1.3"/><circle cx="110" cy="96" r="1.5"/><circle cx="18" cy="100" r="1.2"/><circle cx="92" cy="44" r="1"/></g>
+  <path d="M64 44 L36 86 L92 86 Z" fill="none" stroke="#5ef2ff" stroke-width="3" stroke-dasharray="5 4" stroke-linejoin="round"/>
+  <g stroke="#14152b" stroke-width="3" stroke-linejoin="round">
+    <path d="M64 18 V25" stroke-linecap="round"/><circle cx="64" cy="16" r="3.5" fill="#ffd166"/>
+    <rect x="47" y="25" width="34" height="30" rx="10" fill="#ff5d9e"/>
+    <rect x="17" y="69" width="34" height="30" rx="10" fill="#7dffb3"/>
+    <rect x="77" y="69" width="34" height="30" rx="10" fill="#9b8cff"/>
+  </g>
+  <g fill="#0d1530"><rect x="52" y="31" width="24" height="16" rx="6"/><rect x="22" y="75" width="24" height="16" rx="6"/><rect x="82" y="75" width="24" height="16" rx="6"/></g>
+  <g fill="none" stroke="#5ef2ff" stroke-width="2.6" stroke-linecap="round">
+    <path d="M56 41 q3 -4 6 0 M66 41 q3 -4 6 0"/><path d="M26 85 q3 -4 6 0 M36 85 q3 -4 6 0"/><path d="M86 85 q3 -4 6 0 M96 85 q3 -4 6 0"/>
+  </g>
+</svg>

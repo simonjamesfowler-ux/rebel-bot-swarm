@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rebel Bot Swarm</title>
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--ink:#1d2430;--muted:#6b7580;--line:#dde1e6;--work:#1f9d55;--idle:#8a94a0;--wait:#d97706;--closed:#c4c9cf;--accent:#1f3a5f}
+@media (prefers-color-scheme:dark){:root{--bg:#14181e;--card:#1d232b;--ink:#e6e9ed;--muted:#9aa4ae;--line:#2c343e;--closed:#4a535d;--accent:#8fb3e0}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 Segoe UI,Arial,sans-serif}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+h1{font-size:18px;margin:0;color:var(--accent)}.muted{color:var(--muted)}.slot{padding:4px 10px;border-radius:12px;background:var(--card);border:1px solid var(--line)}
+main{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:16px;padding:16px}
+@media (max-width:900px){main{grid-template-columns:1fr}}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;cursor:pointer;display:flex;gap:10px}
+.card svg{flex:0 0 76px}.card>div{min-width:0}.card:hover{border-color:var(--accent)}.card.closed{opacity:.6}.card.closed .av{filter:grayscale(1)}
+.av .mv{transform-box:fill-box;transform-origin:center}
+.av .blink{animation:blink 5.5s infinite}.av .bub{animation:bob 2s ease-in-out infinite}.av .zz{animation:zz 3s ease-in-out infinite}
+.av .twk{animation:twk 1.6s ease-in-out infinite}.av .twk.d2{animation-delay:.8s}
+.av.working .wig{animation:wig 1.4s ease-in-out infinite}.av.working .slide{animation:slide 1.1s ease-in-out infinite}
+.av.working .scan{animation:scan 2.4s ease-in-out infinite}.av.working .pulse,.av.working .pop{animation:pulse 1.2s ease-in-out infinite}
+.av.working .hop{animation:hop 1s ease-in-out infinite}.av.working .bob{animation:bob 1.8s ease-in-out infinite}
+.av.working .grow{transform-origin:left center;animation:grow 1.8s ease-in-out infinite}
+.av.working .tap{transform-origin:left bottom;animation:tap 1s ease-in-out infinite}
+.av.working .wavel{transform-origin:left center;animation:wave 1s ease-in-out infinite}
+.av.working .drip{animation:drip 1.6s ease-in infinite}.av.working .rise{animation:rise 2.2s ease-out infinite}
+.av.working .beam{animation:beam 1.2s ease-in-out infinite}@keyframes beam{0%,100%{opacity:.35}50%{opacity:1}}
+.av.working .tilt{animation:tilt 2.4s ease-in-out infinite}
+@keyframes blink{0%,95%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+@keyframes wig{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+@keyframes slide{0%,100%{transform:translateX(-3px)}50%{transform:translateX(3px)}}
+@keyframes scan{0%,100%{transform:translate(0,0)}33%{transform:translate(-4px,-2px)}66%{transform:translate(2px,-4px)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+@keyframes hop{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.5px)}}
+@keyframes grow{0%,100%{transform:scaleX(.35)}50%{transform:scaleX(1)}}
+@keyframes tap{0%,100%{transform:rotate(0)}50%{transform:rotate(-10deg)}}
+@keyframes wave{0%,100%{transform:skewY(0)}50%{transform:skewY(-12deg) scaleX(.9)}}
+@keyframes drip{0%{transform:translateY(0);opacity:1}80%{opacity:1}100%{transform:translateY(9px);opacity:0}}
+@keyframes rise{0%{transform:translateY(4px);opacity:0}30%{opacity:1}100%{transform:translateY(-12px);opacity:0}}
+@keyframes tilt{0%,100%{transform:rotate(0)}50%{transform:rotate(70deg)}}
+@keyframes twk{0%,100%{transform:scale(.4) rotate(0);opacity:.2}50%{transform:scale(1) rotate(45deg);opacity:1}}
+@keyframes zz{0%,100%{transform:translate(0,0);opacity:.5}50%{transform:translate(2px,-3px);opacity:1}}
+@media (prefers-reduced-motion:reduce){.av *{animation:none!important}}
+.name{font-weight:600}.status{font-size:12px;font-weight:600}.job{font-size:12px;color:var(--muted);margin-top:4px;max-height:4.2em;overflow:hidden}
+.tag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:8px;background:var(--bg);margin:3px 3px 0 0}
+section h2{font-size:14px;margin:0 0 8px;color:var(--accent)}section{margin-bottom:16px}
+.feed{background:var(--card);border:1px solid var(--line);border-radius:10px;max-height:70vh;overflow:auto}
+.msg{padding:8px 10px;border-bottom:1px solid var(--line);font-size:13px}.msg .hd{font-size:11px;color:var(--muted)}
+.wait li{margin-bottom:6px;font-size:13px}
+dialog{border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);max-width:520px}
+code{background:var(--bg);padding:2px 5px;border-radius:4px;user-select:all}
+.hint{font-size:11px;font-weight:600;color:var(--ink);margin-top:3px}
+button{font:inherit;padding:5px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button.main{background:var(--accent);color:var(--card);border-color:var(--accent)}#addbtn{margin-left:auto}
+#nmform label{display:block;font-size:12px;font-weight:600;margin:8px 0 3px}
+#nmform input{width:100%;font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+#nmmsg{font-weight:600;min-height:1.4em}
+header .slot{flex:1 1 300px;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+</style></head><body>
+<header><h1>Rebel Bot Swarm</h1><span class="slot" id="slot">Shared slot: -</span><span class="muted" id="upd"></span><button id="addbtn" class="main" type="button">+ Add team member</button></header>
+<main>
+ <div>
+  <section><h2>Team</h2><div class="grid" id="cards"></div></section>
+  <section><h2>Waiting for you</h2><ul class="wait" id="wait"></ul></section>
+ </div>
+ <section><h2>Messages between members</h2><div class="feed" id="feed"></div></section>
+</main>
+<dialog id="dlg"><div id="dlgbody"></div><p><button id="dlgclose" type="button">Close</button></p></dialog>
+<dialog id="nmdlg"><form id="nmform" method="dialog"><h3>Add team member</h3>
+ <p class="muted">This saves one request file for your coordinator session to pick up.</p>
+ <label for="nmname">Name (max 60 characters)</label><input id="nmname" maxlength="60" required autocomplete="off">
+ <label for="nmjob">The job, in one line (max 200 characters)</label><input id="nmjob" maxlength="200" required autocomplete="off">
+ <p id="nmmsg"></p><p><button id="nmsend" class="main" type="submit">Save request</button> <button id="nmcancel" type="button">Close</button></p></form></dialog>
+<script>
+const COL={"working":"var(--work)","idle":"var(--idle)","waiting for you":"var(--wait)","closed":"var(--closed)"};
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function hash(s){let h=0;for(const ch of s)h=(h*31+ch.charCodeAt(0))>>>0;return h}
+// Avatars: ORIGINAL characters of our own design (space crew, two own alien species, own robots), chosen by the
+// member's ROLE (keywords in its name, then its job) or by a hash. No likeness to any film, TV or game character.
+// Own picture: a file named after the member in the avatars folder (setting) replaces the drawing.
+const ROLE_WORDS=[["coord","coordinat|task check|\\blead|manager|planner"],["cad","\\bcad\\b|3d|model"],["draught","drawing|drafting|draught"],
+ ["research","research|search|analys"],["cabinet","cabinet|joiner|wood|carpent|maker"],["teacher","teach|skill|coach|tutor|mentor"],
+ ["family","personal|family|home|private"],["postbot","e-?mail|mail|post|inbox"],["books","invoice|account|book|finance|admin"],
+ ["kitchen","kitchen|interior|design"],["fitter","bathroom|plumb|fitter|install|build"],["cleanbot","clean|tidy|cleanup"],["tablet","\\bapp\\b|tablet|mobile"]];
+function roleOf(n,job){for(const t of [n,job||""]){const l=t.toLowerCase();for(const [r,w] of ROLE_WORDS)if(new RegExp(w).test(l))return r}return "crew"}
+const OL="#14152b",HOLO="#5ef2ff",SKIN=["#f2c9a5","#d9a27a","#b07850","#7f5236","#f6dcc0"],HAIRCOL=["#3b2a20","#7a5230","#d4a64a","#22232b","#a7a9b0","#a8432a"],
+ EYEC=["#5b3a29","#2e6f95","#3f7d4e","#4a4a55"];
+function hsl(c){const r=parseInt(c.slice(1,3),16)/255,g=parseInt(c.slice(3,5),16)/255,b=parseInt(c.slice(5,7),16)/255;
+ const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,d=mx-mn;let h=0,s=0;
+ if(d){s=d/(1-Math.abs(2*l-1));h=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;h*=60;if(h<0)h+=360}return [h,s,l]}
+function hx([h,s,l]){const c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2;
+ const [r,g,b]=h<60?[c,x,0]:h<120?[x,c,0]:h<180?[0,c,x]:h<240?[0,x,c]:h<300?[x,0,c]:[c,0,x];
+ return "#"+[r,g,b].map(v=>Math.round(Math.min(1,Math.max(0,v+m))*255).toString(16).padStart(2,"0")).join("")}
+const cl=(v,a,b)=>Math.min(b,Math.max(a,v));
+const okc=c=>/^#[0-9a-f]{6}$/i.test(c)?c:"#5577aa";
+function tone(c,dl=0){const [h,s,l]=hsl(okc(c));return hx([h,cl(s,.5,.8),cl(cl(l,.46,.56)+dl,.05,.95)])}
+function shade(c,dl){const [h,s,l]=hsl(c);return hx([h,s,cl(l+dl,0,1)])}
+const S=w=>`stroke="${OL}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
+const glove=(x,y)=>`<circle cx="${x}" cy="${y}" r="4.8" fill="#dfe6ee" ${S(1.8)}/><path d="M${x-2.5} ${y-1.2} q2.5 -2 5 0" fill="none" stroke="#9aa5b1" stroke-width="1.2"/>`;
+const holo=d=>`<path d="${d}" fill="${HOLO}" fill-opacity=".2" stroke="${HOLO}" stroke-width="1.7" stroke-linejoin="round"/>`;
+const hp=(d,c)=>`<path d="${d}" fill="${c}" ${S(2)}/>`;
+const HL=`<path d="M41 29.5 Q47 26.5 54 27.5" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="2" stroke-linecap="round"/>`;
+const HAIRS=[
+ c=>({back:"",front:hp("M31.5 44 C29 27 41 23 52 24.5 C63 25 71 32 68.5 44 C66 36 60 31.5 52 31 C47 34 40 33 35 36 C33 38 32 41 31.5 44Z",c)+HL}),
+ c=>{const ci=[[34,37,6.5],[39,30,7],[47,26.5,7.5],[55,26.5,7.5],[62,30,7],[66.5,37,6.5]].map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}"/>`).join("");
+   return {back:"",front:`<g fill="${c}" stroke="${OL}" stroke-width="4">${ci}</g><g fill="${c}">${ci}</g>`+HL}},
+ c=>({back:`<circle cx="50" cy="20.5" r="7.5" fill="${c}" ${S(2)}/>`,front:hp("M31.5 44 C30 28 40 25 50 25 C60 25 70 28 68.5 44 C64 36 57 33 50 33 C43 33 36 36 31.5 44Z",c)+HL}),
+ c=>({back:"",front:hp("M31.5 44 L31 33 L36 31 L35 25 L42 27 L44 20 L50 25 L56 19 L58 27 L65 25 L64 31 L69 33 L68.5 44 C63 36 57 34 50 34 C43 34 37 36 31.5 44Z",c)+HL}),
+ c=>({back:hp("M30 46 C27 26 39 22 50 22 C61 22 73 26 70 46 L73 70 Q50 76 27 70Z",c),front:hp("M31.5 44 C30 28 40 25 50 25 C60 25 70 28 68.5 44 C66 37 60 32 54 31 C50 35 42 37 36 38 C34 40 32.5 42 31.5 44Z",c)+HL}),
+ c=>({back:"",front:hp("M32 40 C32 29 40 26 50 26 C60 26 68 29 68 40 C62 35 56 34 50 34 C44 34 38 35 32 40Z",c)+HL})];
+function brows(st,c){const y=st==="waiting for you"?36.8:39,t=st==="working"?1.3:0;
+ return `<path d="M39.5 ${y+t} Q43 ${y-1.6} 46.5 ${y} M53.5 ${y} Q57 ${y-1.6} 60.5 ${y+t}" fill="none" stroke="${c}" stroke-width="2.2" stroke-linecap="round"/>`}
+function eye(st,h,x,y,k=1){if(st==="closed")return `<path d="M${x-3.5*k} ${y} Q${x} ${y+3*k} ${x+3.5*k} ${y}" fill="none" stroke="${OL}" stroke-width="2" stroke-linecap="round"/>`;
+ const ic=EYEC[h%EYEC.length],w=st==="waiting for you",dx=w?k:0,dy=w?-1.3*k:0;
+ return `<ellipse cx="${x}" cy="${y}" rx="${3.8*k}" ry="${4.6*k}" fill="#fff" ${S(1.4)}/><circle cx="${x+dx}" cy="${y+dy+.4}" r="${2.7*k}" fill="${ic}"/><circle cx="${x+dx}" cy="${y+dy+.4}" r="${1.3*k}" fill="#111"/><circle cx="${x+dx+k}" cy="${y+dy-.9*k}" r="${k}" fill="#fff"/>`}
+const eyes=(st,h,y=46)=>`<g class="mv blink">${eye(st,h,43,y)}${eye(st,h,57,y)}</g>`;
+function mouth(st){return {"working":`<path d="M44.5 54.5 Q50 62 55.5 54.5Z" fill="#8c2f39" ${S(1.5)}/><path d="M46.2 55.4 H53.8" stroke="#fff" stroke-width="1.7"/>`,
+ "waiting for you":`<ellipse cx="50" cy="56.5" rx="2" ry="2.5" fill="#8c2f39" ${S(1.4)}/>`,
+ "closed":`<path d="M47 56 Q50 57.5 53 56" fill="none" ${S(1.6)}/>`}[st]
+ ||`<path d="M45 54.5 Q50 59 55 54.5" fill="none" ${S(1.8)}/>`}
+function botFace(st,cy,c){const L=42,R=58;
+ if(st==="closed")return `<path d="M${L-4} ${cy} H${L+4} M${R-4} ${cy} H${R+4} M47 ${cy+7} H53" stroke="${c}" stroke-width="2.4" stroke-linecap="round"/>`;
+ if(st==="working")return `<path d="M${L-4} ${cy+2} Q${L} ${cy-4} ${L+4} ${cy+2} M${R-4} ${cy+2} Q${R} ${cy-4} ${R+4} ${cy+2} M45 ${cy+6} Q50 ${cy+10} 55 ${cy+6}" fill="none" stroke="${c}" stroke-width="2.6" stroke-linecap="round"/>`;
+ if(st==="waiting for you")return `<g fill="none" stroke="${c}" stroke-width="2.3"><circle cx="${L}" cy="${cy}" r="3.6"/><circle cx="${R}" cy="${cy}" r="3.6"/><ellipse cx="50" cy="${cy+8}" rx="2" ry="2.4"/></g>`;
+ return `<g class="mv blink" fill="${c}"><rect x="${L-3}" y="${cy-4.5}" width="6" height="9" rx="3"/><rect x="${R-3}" y="${cy-4.5}" width="6" height="9" rx="3"/></g><path d="M46 ${cy+7} Q50 ${cy+9.5} 54 ${cy+7}" fill="none" stroke="${c}" stroke-width="2.2" stroke-linecap="round"/>`}
+// space suit bust: flat colour, flat shadow side, shoulder pads, neck ring, chest panel
+function suit(C,neck){const B="M12 100 C12 81 27 71.5 50 71.5 C73 71.5 88 81 88 100Z";
+ return `<rect x="44.5" y="58" width="11" height="15" rx="3" fill="${neck}" ${S(2)}/><path d="${B}" fill="${C.col}"/><path d="M60 72.6 C76 76 86 86 87.6 100 H66 C66 88 64 79 60 72.6Z" fill="${C.dark}"/><path d="${B}" fill="none" ${S(2.6)}/>`+
+  `<path d="M14 97 C14 85 22 77.5 33 75.5 L36 85 C27 87 22 91 21 98Z" fill="#d3dbe4" ${S(2)}/><path d="M86 97 C86 85 78 77.5 67 75.5 L64 85 C73 87 78 91 79 98Z" fill="#a9b4c2" ${S(2)}/>`+
+  `<path d="M37 71 Q50 80 63 71 L61 66.5 Q50 74 39 66.5Z" fill="#c3ccd6" ${S(2)}/>`+
+  `<rect x="41" y="83" width="18" height="10" rx="2.5" fill="${OL}" stroke="${C.acc}" stroke-width="1.4"/><circle cx="45.5" cy="88" r="1.7" fill="#ff5d73"/><circle cx="50" cy="88" r="1.7" fill="#ffd166"/><circle cx="54.5" cy="88" r="1.7" fill="${HOLO}"/>`}
+// heads: space crew (human) and two alien species of our own design
+const HEADS={
+ human:(C,st,h,role)=>{const hc=HAIRCOL[(h>>>3)%HAIRCOL.length],hv=HAIRS[role==="fitter"?5:(h>>>5)%HAIRS.length](hc),sk=SKIN[h%SKIN.length],skD=shade(sk,-.09);
+  return {neck:skD,back:hv.back,head:`<circle cx="32" cy="47" r="4.2" fill="${sk}" ${S(2)}/><circle cx="68" cy="47" r="4.2" fill="${skD}" ${S(2)}/>`+
+   `<ellipse cx="50" cy="45" rx="18" ry="19" fill="${sk}"/><path d="M57 27.5 C71 33 72 57 55 63.5 C64 53 65 38 57 27.5Z" fill="${skD}"/><ellipse cx="50" cy="45" rx="18" ry="19" fill="none" ${S(2.6)}/>`+
+   `<ellipse cx="39.5" cy="52.5" rx="3.6" ry="2.2" fill="#ff6b6b" opacity=".3"/><ellipse cx="60.5" cy="52.5" rx="3.6" ry="2.2" fill="#ff6b6b" opacity=".3"/>`+
+   hv.front+brows(st,shade(hc,-.12))+eyes(st,h)+mouth(st)}},
+ // tall smooth dome, lavender, three eyes, no ears
+ dome:(C,st,h)=>{const sk="#b9a3ee",skD="#9479d6",P="M32 50 C30 24 38 13 50 13 C62 13 70 24 68 50 C67 60 60 65 50 65 C40 65 33 60 32 50Z";
+  return {neck:skD,back:"",head:`<path d="${P}" fill="${sk}"/><path d="M58 15 C70 24 70 52 60 63 C64 50 64 30 58 15Z" fill="${skD}"/><g fill="${skD}"><circle cx="42" cy="23" r="2.2"/><circle cx="47" cy="18.5" r="1.5"/><circle cx="55" cy="21" r="1.8"/></g><path d="${P}" fill="none" ${S(2.6)}/>`+
+   `<g class="mv blink">${eye(st,h,50,34,.75)}${eye(st,h,43,47)}${eye(st,h,57,47)}</g>`+mouth(st)}},
+ // wide round head with side fins, coral, freckles
+ finned:(C,st,h)=>{const sk="#ff9a76",skD="#e0694d",P="M29 46 C29 31 38 25 50 25 C62 25 71 31 71 46 C71 57 62 65 50 65 C38 65 29 57 29 46Z";
+  return {neck:skD,back:`<path d="M31 37 Q22 33 16 38 Q21 41 15 45 Q21 48 16 52 Q24 55 31 51Z" fill="#7fd1c7" ${S(2)}/><path d="M69 37 Q78 33 84 38 Q79 41 85 45 Q79 48 84 52 Q76 55 69 51Z" fill="#7fd1c7" ${S(2)}/><path d="M30 40 L19 39 M30 45 L18 45 M30 49 L19 51 M70 40 L81 39 M70 45 L82 45 M70 49 L81 51" stroke="${OL}" stroke-width="1.1"/>`,
+   head:`<path d="${P}" fill="${sk}"/><path d="M60 27 C72 33 74 55 58 64 C66 52 67 37 60 27Z" fill="${skD}"/><path d="M44 27.5 Q50 23.5 56 27.5" fill="none" stroke="${skD}" stroke-width="2.4" stroke-linecap="round"/><path d="${P}" fill="none" ${S(2.6)}/>`+
+   `<g fill="${skD}"><circle cx="37" cy="52" r="1"/><circle cx="40" cy="54" r="1"/><circle cx="36" cy="55.5" r="1"/><circle cx="63" cy="52" r="1"/><circle cx="60" cy="54" r="1"/><circle cx="64" cy="55.5" r="1"/></g>`+eyes(st,h,45)+mouth(st)}}};
+// job props: pre = on the suit, top = over the head, front = held in front of the frame
+const ROLE_ART={
+ crew:C=>({pre:`<path d="M24 86 l5 -3 5 3 -5 3z" fill="${C.acc}" ${S(1.2)}/>`}),
+ coord:C=>({top:`<path d="M31 46 C30 20 70 20 69 46" fill="none" ${S(3.4)}/><rect x="27.5" y="40" width="8" height="12" rx="3.5" fill="#3d4466" ${S(1.6)}/><rect x="64.5" y="40" width="8" height="12" rx="3.5" fill="#3d4466" ${S(1.6)}/><path d="M31 51 Q32 60 41 60.5" fill="none" stroke="#3d4466" stroke-width="2.4" stroke-linecap="round"/><circle cx="42.5" cy="60.5" r="2.3" fill="#ff5d73" ${S(1.2)}/>`,
+  front:holo("M60 62 H88 V92 H60Z")+`<rect x="60" y="62" width="28" height="5" fill="${HOLO}" fill-opacity=".5"/><path d="M64 73 l2 2 3.5 -4 M64 80 l2 2 3.5 -4" fill="none" stroke="${HOLO}" stroke-width="1.9" stroke-linecap="round"/><path class="mv pop" d="M64 87 l2 2 3.5 -4" fill="none" stroke="#7dffb3" stroke-width="2.2" stroke-linecap="round"/><path d="M72 73 h12 M72 80 h12 M72 87 h9" stroke="${HOLO}" stroke-opacity=".7" stroke-width="1.5"/>`+glove(63,94)}),
+ cad:C=>({front:`<path d="M60 86 L55 60 H91 L86 86Z" fill="${HOLO}" fill-opacity=".1"/><g class="mv bob"><path d="M61 76 H70 V67 H81 V73" fill="none" stroke="${HOLO}" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><g fill="${OL}" stroke="${HOLO}" stroke-width="1.6"><circle cx="70" cy="76" r="2.4"/><circle cx="70" cy="67" r="2.4"/><circle cx="81" cy="67" r="2.4"/></g><path d="M81 73 v4 M78 77 h6" stroke="${HOLO}" stroke-width="2" stroke-linecap="round"/></g>`+
+  `<rect x="56" y="86" width="34" height="9" rx="2.5" fill="#2b2f45" ${S(2)}/><rect x="59.5" y="88.5" width="27" height="4" rx="1" fill="${HOLO}" opacity=".75"/>`+glove(58,94)+glove(88,94)}),
+ draught:C=>({top:`<rect x="32.5" y="39.5" width="35" height="12" rx="6" fill="#ff9e3d" fill-opacity=".5" ${S(2)}/><path d="M36 43 H46" stroke="#fff" stroke-opacity=".75" stroke-width="1.8" stroke-linecap="round"/><rect x="29" y="43" width="4" height="5" rx="1" fill="#3d4466" ${S(1.2)}/><rect x="67" y="43" width="4" height="5" rx="1" fill="#3d4466" ${S(1.2)}/>`,
+  front:`<g class="mv slide"><path d="M7 73 H35 V97 H7Z" fill="#2f6fd6" ${S(2)}/><path d="M7 79 H35 M7 85 H35 M7 91 H35 M14 73 V97 M21 73 V97 M28 73 V97" stroke="#fff" stroke-opacity=".22" stroke-width=".8"/><path d="M11 93 V80 H22 V86 H31 V93Z M22 86 V93" fill="none" stroke="#fff" stroke-width="1.4"/><rect x="5" y="69.5" width="32" height="6" rx="3" fill="#5b8def" ${S(1.8)}/>${glove(34,90)}</g>`}),
+ research:C=>({front:`<path class="mv beam" d="M69 74 L57 50 H93 L81 74Z" fill="#7dffb3" fill-opacity=".22" stroke="#7dffb3" stroke-opacity=".6" stroke-width="1"/><path class="mv beam" d="M60 57 H90" stroke="#7dffb3" stroke-width="1.6"/>`+
+  `<rect x="67" y="73" width="14" height="21" rx="3.5" fill="#3d4466" ${S(2)}/><rect x="69.5" y="76.5" width="9" height="7" rx="1.5" fill="#7dffb3"/><path d="M71 81 l2 -2 2 1.5 2 -3" fill="none" stroke="#14152b" stroke-width="1"/><circle cx="74" cy="88" r="1.8" fill="#ff5d73"/>`+glove(70,95)}),
+ cabinet:C=>({front:`<rect x="7" y="77" width="28" height="19" rx="1" fill="#d4a373" ${S(2)}/><path d="M10 82 q6 2 12 0 M14 90 q6 2 12 0" fill="none" stroke="#a9744a" stroke-width="1.3"/>`+glove(33,92)+
+  `<g class="mv wig"><path d="M62 98 L64 88 H72 L71 98Z" fill="#3d4466" ${S(2)}/><path d="M58 79 H80 L85 83 V88 H58Z" fill="${C.acc}" ${S(2)}/><rect x="61" y="81" width="9" height="3" rx="1.5" fill="#fff" fill-opacity=".55"/><path d="M85 85.5 H95" stroke="${OL}" stroke-width="4.4" stroke-linecap="round"/><path d="M85 85.5 H95" stroke="#ffd166" stroke-width="2.2" stroke-linecap="round"/>${glove(67,95)}</g>`}),
+ teacher:C=>({front:holo("M55 58 H91 V84 H55Z")+`<text x="65.5" y="76" text-anchor="middle" font-size="12" font-weight="800" fill="${HOLO}" font-family="Segoe UI,Arial">A+</text><path d="M76 66 q2 -3 4 0 t4 0 M76 72 h10 M76 77 h7" fill="none" stroke="${HOLO}" stroke-width="1.4" stroke-linecap="round"/>`+
+  `<g class="mv tap"><path d="M47 95 L62 77" stroke="${OL}" stroke-width="4.8" stroke-linecap="round"/><path d="M47 95 L62 77" stroke="#dfe6ee" stroke-width="2.6" stroke-linecap="round"/><circle cx="62.5" cy="76.5" r="2.4" fill="#ff5d73" ${S(1)}/>${glove(47,95)}</g>`}),
+ family:C=>({front:holo("M58 84 L73 71 L88 84 V97 H58Z")+`<path d="M69 97 V89 H77 V97" fill="none" stroke="${HOLO}" stroke-width="1.6"/><rect x="79" y="85" width="5" height="5" fill="none" stroke="${HOLO}" stroke-width="1.4"/>`+
+  `<path class="mv pulse" d="M85 67 C81 63 77 59.5 81 56.5 C83 55 85 56.5 85 58 C85 56.5 87 55 89 56.5 C93 59.5 89 63 85 67Z" fill="#ff5d9e" ${S(1.5)}/>`+glove(60,95)}),
+ books:C=>({front:`<rect x="10" y="74" width="21" height="24" rx="3.5" fill="#3d4466" ${S(1.9)}/><rect x="13" y="77" width="15" height="6" rx="1" fill="#7dffb3"/><g fill="#dfe6ee"><circle cx="15.5" cy="88" r="1.7"/><circle cx="20.5" cy="88" r="1.7"/><circle cx="25.5" cy="88" r="1.7"/><circle cx="15.5" cy="93" r="1.7"/><circle cx="20.5" cy="93" r="1.7"/></g><circle cx="25.5" cy="93" r="1.7" fill="#ffd166"/>${glove(30,93)}`+
+  `<rect x="60" y="65" width="24" height="31" rx="2" fill="#fff" ${S(2)}/><rect x="60" y="65" width="24" height="5" fill="${C.acc}"/><path d="M64 88 H80 M64 92 H76" stroke="#adb5bd" stroke-width="1.6"/><text x="72" y="84" text-anchor="middle" font-size="15" font-weight="800" fill="#2a9d8f" font-family="Segoe UI,Arial">£</text>${glove(62,93)}`+
+  `<g class="mv hop"><circle cx="88" cy="57" r="5.5" fill="#ffd166" ${S(1.6)}/><text x="88" y="60" font-size="7.5" font-weight="800" text-anchor="middle" fill="#9c6644" font-family="Segoe UI,Arial">£</text></g>`}),
+ kitchen:C=>({front:holo("M7 80 H35 V97 H7Z")+`<path d="M7 86 H35 M21 80 V97" stroke="${HOLO}" stroke-width="1.2"/><path d="M5 77 H37" stroke="${HOLO}" stroke-width="2.4" stroke-linecap="round"/>`+
+  `<g class="mv grow"><path d="M74 86 H96" stroke="#ff3b5c" stroke-width="2" stroke-linecap="round"/><circle cx="96" cy="86" r="2.2" fill="#ff3b5c"/></g><rect x="57" y="79" width="18" height="14" rx="3.5" fill="#ffd60a" ${S(2)}/><rect x="60" y="82" width="10" height="5" rx="1" fill="${OL}"/><text x="65" y="86.3" text-anchor="middle" font-size="4" fill="#7dffb3" font-family="Consolas,monospace">2.4m</text>${glove(60,94)}`}),
+ fitter:C=>({pre:`<path d="M36 74 L44 100 M64 74 L56 100" stroke="#ffc300" stroke-width="3.4"/><path d="M36 74 L44 100 M64 74 L56 100" stroke="${OL}" stroke-width=".8" stroke-dasharray="2 3"/>`,
+  top:`<path d="M31 36 C31 17 69 17 69 36Z" fill="#ffc300" ${S(2.4)}/><path d="M57 19.5 C66 23 69 29 69 36 H61 C62 29 60 23 57 19.5Z" fill="#e0a800"/><rect x="27" y="33.5" width="46" height="5" rx="2.5" fill="#e0a800" ${S(2)}/><rect x="45" y="22" width="10" height="7.5" rx="2" fill="#dfe6ee" ${S(1.6)}/><circle cx="50" cy="25.7" r="2.4" fill="#fffbe6"/>`,
+  front:`<path d="M3 72 H19 V83" fill="none" ${S(8.5)}/><path d="M3 72 H19 V83" fill="none" stroke="#c0c7cf" stroke-width="5" stroke-linejoin="round"/><rect x="14.5" y="79" width="9" height="5" rx="1" fill="#e9c46a" ${S(1.4)}/><path class="mv drip" d="M19 87 Q22 91.5 19 93 Q16 91.5 19 87Z" fill="${HOLO}" ${S(1)}/>`+
+  `<g class="mv wig"><path d="M64 95 L79 77" stroke="${OL}" stroke-width="7.8" stroke-linecap="round"/><path d="M64 95 L79 77" stroke="#ced4da" stroke-width="4.6" stroke-linecap="round"/><circle cx="81.5" cy="73" r="7.5" fill="#ced4da" ${S(2)}/><circle cx="81.5" cy="73" r="3.2" fill="#495057" ${S(1.3)}/>${glove(67,91)}</g>`})};
+const HEAD_OF={teacher:"dome",cabinet:"finned"};
+// robots and device of our own design
+const BOTS={
+ postbot:(st,C)=>({in:`<path d="M16 100 C16 83 29 74.5 50 74.5 C71 74.5 84 83 84 100Z" fill="${C.col}"/><path d="M60 75.5 C74 78 83 87 84 100 H66 C66 89 64 81 60 75.5Z" fill="${C.dark}"/><path d="M16 100 C16 83 29 74.5 50 74.5 C71 74.5 84 83 84 100Z" fill="none" ${S(2.6)}/>`+
+   `<rect x="39" y="83" width="22" height="7" rx="3.5" fill="${OL}"/><rect x="41.5" y="85" width="17" height="3" rx="1.5" fill="#ffd166"/><rect x="45" y="62" width="10" height="13" fill="#8d99ae" ${S(2)}/>`+
+   `<path d="M26 40 H19 V29" fill="none" ${S(2.4)}/><path d="M74 40 H81 V29" fill="none" ${S(2.4)}/><circle cx="19" cy="27" r="3.2" fill="#ffd166" ${S(1.5)}/><circle cx="81" cy="27" r="3.2" fill="#ffd166" ${S(1.5)}/>`+
+   `<rect x="26" y="21" width="48" height="43" rx="15" fill="${C.col}"/><path d="M60 21.5 C70 23 74 30 74 40 V50 C74 58 70 63 62 63.5 C68 56 68 30 60 21.5Z" fill="${C.dark}"/><rect x="26" y="21" width="48" height="43" rx="15" fill="none" ${S(2.6)}/><rect x="32" y="29" width="36" height="26" rx="9" fill="#0d1530" ${S(1.8)}/>`+botFace(st,39,HOLO),
+  front:`<g class="mv hop"><g transform="rotate(-10 72 76)"><rect x="63" y="70" width="17" height="11" rx="1" fill="#fff" ${S(1.5)}/><path d="M63 70 L71.5 76 L80 70" fill="none" ${S(1.3)}/></g></g><rect x="59" y="80" width="28" height="17" rx="3.5" fill="${C.acc}" ${S(2)}/><path d="M59 80 H87 V86 Q73 90 59 86Z" fill="${shade(C.acc,-.12)}" ${S(1.8)}/><circle cx="73" cy="87" r="1.8" fill="#ffd166" ${S(1)}/>`+
+   `<g transform="rotate(-14 15 89)"><rect x="5" y="83" width="18" height="12" rx="1" fill="#fff" ${S(1.5)}/><path d="M5 83 L14 89.5 L23 83" fill="none" ${S(1.3)}/></g>${glove(22,93)}`}),
+ cleanbot:(st,C)=>({in:`<path d="M20 100 C20 86 31 78 50 78 C69 78 80 86 80 100Z" fill="${C.col}"/><path d="M60 79 C72 81 79 89 80 100 H66 C66 91 64 84 60 79Z" fill="${C.dark}"/><path d="M20 100 C20 86 31 78 50 78 C69 78 80 86 80 100Z" fill="none" ${S(2.6)}/><rect x="36" y="86" width="28" height="5" rx="2.5" fill="#fff" fill-opacity=".4"/>`+
+   `<rect x="44" y="62" width="12" height="17" fill="#8d99ae" ${S(2)}/><rect x="45.5" y="15.5" width="9" height="8" rx="2.5" fill="#ffd166" ${S(1.6)}/>`+
+   `<path d="M32 23 H68 L79 43 L68 63 H32 L21 43Z" fill="${C.col}"/><path d="M60 23 H68 L79 43 L68 63 H60 L70 43Z" fill="${C.dark}"/><path d="M32 23 H68 L79 43 L68 63 H32 L21 43Z" fill="none" ${S(2.6)}/><rect x="31" y="32" width="38" height="22" rx="9" fill="#0d1530" ${S(1.8)}/>`+botFace(st,41,"#7dffb3"),
+  front:`<path d="M76 84 Q89 84 87 70" fill="none" ${S(6.8)}/><path d="M76 84 Q89 84 87 70" fill="none" stroke="#adb5bd" stroke-width="4" stroke-linecap="round"/><g class="mv wig"><path d="M80 70 H94 L91 62 H83Z" fill="${C.acc}" ${S(1.8)}/></g>`+
+   `<g class="mv rise"><circle cx="15" cy="46" r="5.5" fill="${HOLO}" fill-opacity=".3" stroke="${HOLO}" stroke-width="1.4"/><circle cx="9" cy="58" r="3.2" fill="${HOLO}" fill-opacity=".3" stroke="${HOLO}" stroke-width="1.2"/><circle cx="20" cy="33" r="2.6" fill="${HOLO}" fill-opacity=".3" stroke="${HOLO}" stroke-width="1.1"/></g>`}),
+ tablet:(st,C)=>{let sl="";for(let i=0;i<6;i++)sl+=`<rect class="mv tilt" x="${33+i*6}" y="30.5" width="4.4" height="3" rx=".8" fill="${C.light}" ${S(.8)}/>`;
+  return {in:"",front:`<path d="M24 58 Q12 60 10 71" fill="none" ${S(3.2)}/><path d="M76 58 Q88 60 90 71" fill="none" ${S(3.2)}/>${glove(10,73)}${glove(90,73)}`+
+   `<path d="M40 88 V96 M60 88 V96" ${S(3.2)}/><ellipse cx="38" cy="97" rx="5" ry="2.6" fill="#dfe6ee" ${S(1.6)}/><ellipse cx="62" cy="97" rx="5" ry="2.6" fill="#dfe6ee" ${S(1.6)}/>`+
+   `<rect x="22" y="12" width="56" height="78" rx="9" fill="#2b2f45" ${S(2.6)}/><rect x="27" y="18" width="46" height="62" rx="4" fill="#0d1530"/><g fill="#fff"><circle cx="34" cy="24" r=".7"/><circle cx="46" cy="21" r=".6"/><circle cx="56" cy="26" r=".7"/></g><circle cx="65" cy="25" r="4.5" fill="#ffd166"/>`+
+   `<rect x="27" y="56" width="46" height="24" fill="${HOLO}" fill-opacity=".25"/><rect x="33" y="37" width="3.6" height="21" fill="${C.col}" ${S(1)}/><rect x="63.4" y="37" width="3.6" height="21" fill="${C.col}" ${S(1)}/><rect x="31" y="34" width="38" height="4" rx="1" fill="${C.col}" ${S(1.2)}/>${sl}`+
+   botFace(st,65,HOLO)+`<circle cx="50" cy="85" r="2.6" fill="#495057"/>`}}};
+// dark starfield with a nebula in the member colour, a small planet in the accent colour
+function space(C,h){let s=h||1;const rnd=()=>(s=(Math.imul(s,1103515245)+12345)>>>0)/4294967296;let st="";
+ for(let i=0;i<16;i++){const x=6+rnd()*88,y=6+rnd()*66,r=.4+rnd()*1.1;st+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(2)}" fill="#fff" opacity="${(.4+rnd()*.6).toFixed(2)}"/>`}
+ return `<circle cx="50" cy="50" r="46" fill="url(#bg${C.k})"/><ellipse cx="30" cy="32" rx="36" ry="22" fill="url(#nb${C.k})"/><ellipse cx="76" cy="62" rx="30" ry="22" fill="url(#nc${C.k})"/>${st}`+
+  `<circle cx="20" cy="30" r="5" fill="${C.acc}"/><path d="M20 25 A5 5 0 0 1 20 35 A2.6 5 0 0 0 20 25Z" fill="#000" opacity=".3"/><ellipse cx="20" cy="30" rx="9" ry="2.3" fill="none" stroke="#fff" stroke-opacity=".65" stroke-width="1.2" transform="rotate(-20 20 30)"/>`}
+function overlay(st){
+ if(st==="working")return `<path class="mv twk" d="M88 13 l1.6 4.4 4.4 1.6 -4.4 1.6 -1.6 4.4 -1.6 -4.4 -4.4 -1.6 4.4 -1.6z" fill="#ffd166" ${S(1)}/><path class="mv twk d2" d="M8 50 l1 2.8 2.8 1 -2.8 1 -1 2.8 -1 -2.8 -2.8 -1 2.8 -1z" fill="#fff" ${S(.8)}/>`;
+ if(st==="waiting for you")return `<g class="mv bub"><path d="M70 3 H92 Q98 3 98 9 V21 Q98 27 92 27 H83 L75 34 L77 27 H70 Q64 27 64 21 V9 Q64 3 70 3Z" fill="#fff" ${S(1.9)}/><text x="81" y="22.5" text-anchor="middle" font-size="19" font-weight="800" font-family="Segoe UI,Arial" style="fill:var(--wait)">?</text></g>`;
+ if(st==="closed")return `<g class="mv zz" font-family="Segoe UI,Arial" font-weight="800" fill="#c8cede" stroke="${OL}" stroke-width=".6"><text x="74" y="22" font-size="13">z</text><text x="84" y="13" font-size="9">z</text></g>`;
+ return ""}
+function avatar(m){const role=roleOf(m.name,m.job),h=hash(m.name),k="a"+h.toString(36),st=m.status,ring=COL[st]||"var(--idle)";
+ const [hu]=hsl(okc(m.colour));
+ const C={k,col:tone(m.colour),light:tone(m.colour,.2),dark:tone(m.colour,-.16),acc:hx([(hu+160)%360,.75,.6])};
+ const defs=`<defs><radialGradient id="bg${k}" cx=".5" cy=".42" r=".62"><stop offset="0" stop-color="${tone(m.colour,-.22)}"/><stop offset="1" stop-color="#070a1a"/></radialGradient>`+
+  `<radialGradient id="nb${k}"><stop offset="0" stop-color="${C.light}" stop-opacity=".6"/><stop offset="1" stop-color="${C.light}" stop-opacity="0"/></radialGradient>`+
+  `<radialGradient id="nc${k}"><stop offset="0" stop-color="${C.acc}" stop-opacity=".35"/><stop offset="1" stop-color="${C.acc}" stop-opacity="0"/></radialGradient>`+
+  `<clipPath id="cl${k}"><circle cx="50" cy="50" r="46"/></clipPath></defs>`;
+ let inner,front="";
+ if(m.pic)inner=`<circle cx="50" cy="50" r="46" fill="#0d1530"/><image href="${esc(m.pic)}" x="4" y="4" width="92" height="92" preserveAspectRatio="xMidYMid slice"/>`;
+ else if(BOTS[role]){const r=BOTS[role](st,C);inner=space(C,h)+r.in;front=r.front}
+ else{const hd=HEADS[HEAD_OF[role]||"human"](C,st,h,role),p=ROLE_ART[role](C);
+  inner=space(C,h)+hd.back+suit(C,hd.neck)+(p.pre||"")+hd.head+(p.top||"");front=p.front||""}
+ return `<svg class="av ${st==="working"?"working":""}" width="76" height="76" viewBox="0 0 100 100" role="img" aria-label="${esc(m.name)}: ${esc(st)}">${defs}<g clip-path="url(#cl${k})">${inner}</g>`+
+  `<circle cx="50" cy="50" r="44.3" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="1"/><circle cx="50" cy="50" r="46.5" fill="none" style="stroke:${ring}" stroke-width="4.2"/>${front}${overlay(st)}</svg>`}
+let last={};
+// Data comes from the VS Code extension by postMessage only. No network.
+const VS=typeof acquireVsCodeApi==="function"?acquireVsCodeApi():null;
+const CLOSED_HINT="Closed: reopen this session to send it work";
+function show(i){const m=last.members[i];if(!m)return;
+ dlgbody.innerHTML=`<h3>${esc(m.name)}</h3><p>Status: <b>${esc(m.status)}</b> ${esc(m.since)} ${esc(m.extra)}</p>`+
+ (m.status==="closed"?`<p><b>${CLOSED_HINT}.</b> A closed tab ends the session: no member can reach it until it is reopened.</p>`:"")+`<p>${esc(m.job)}</p>`+
+ (m.sid?`<p><b>To open this session:</b> in VS Code, open the Claude Code panel, then its past conversations list, and pick "${esc(m.name)}".<br>
+ Or in a terminal: <code>claude --resume ${esc(m.sid)}</code></p>`:`<p>To reopen: in the Claude Code panel, open the past conversations list and pick "${esc(m.name)}" by its title.</p>`)+
+ (m.files.length?`<p><b>Files booked:</b><br>${m.files.map(esc).join("<br>")}</p>`:"");dlg.showModal()}
+cards.addEventListener("click",e=>{const c=e.target.closest(".card");if(c)show(+c.dataset.i)});
+dlgclose.addEventListener("click",()=>dlg.close());
+function render(s){last=s;addbtn.hidden=!s.requests;
+ slot.textContent="Shared slot: "+(s.holder||"free").replace(/\*/g,"").slice(0,140);upd.textContent="updated "+s.updated+(s.error?"  ERROR "+s.error:"");
+ const order={"working":0,"waiting for you":1,"idle":2,"closed":3};
+ const idx=s.members.map((m,i)=>i).sort((a,b)=>(order[s.members[a].status]??4)-(order[s.members[b].status]??4));
+ const ch=idx.map(i=>{const m=s.members[i],cl=m.status==="closed";return `<div class="card ${cl?"closed":""}" data-i="${i}">${avatar(m)}
+  <div><div class="name">${esc(m.name)}</div><div class="status" style="color:${COL[m.status]||"var(--idle)"}">${esc(m.status)}${m.since?" · "+esc(m.since):""}</div>
+  ${cl?`<div class="hint">${CLOSED_HINT}</div>`:""}
+  ${m.slot?'<span class="tag">holds the shared slot</span>':""}${m.files.length?`<span class="tag">${m.files.length} file group(s) booked</span>`:""}
+  <div class="job">${esc(m.job)}</div></div></div>`}).join("");
+ if(ch!==cards._h){cards.innerHTML=ch;cards._h=ch}   // same cards: keep the animations running
+ wait.innerHTML=s.waiting.map(w=>`<li>${esc(w.slice(0,260))}${w.length>260?"…":""}</li>`).join("")||"<li class='muted'>Nothing listed</li>";
+ feed.innerHTML=s.feed.map(f=>`<div class="msg"><div class="hd">${esc(f.time)} · <b>${esc(f.from)}</b> → <b>${esc(f.to)}</b></div>${esc(f.text)}</div>`).join("")||"<div class='msg muted'>No messages yet</div>";}
+// ADD TEAM MEMBER (optional): one request file in your requests folder; the panel's only write
+addbtn.addEventListener("click",()=>{nmmsg.textContent="";nmsend.disabled=false;nmdlg.showModal();nmname.focus()});
+nmcancel.addEventListener("click",()=>nmdlg.close());
+function nmDone(ok,msg){nmmsg.textContent=msg;nmmsg.style.color=ok?"var(--work)":"var(--wait)";nmsend.disabled=ok;if(ok){nmname.value="";nmjob.value=""}}
+nmform.addEventListener("submit",async e=>{e.preventDefault();const name=nmname.value.trim(),job=nmjob.value.trim();
+ if(!name||!job){nmDone(false,"Type a name and the job.");return}
+ if(name.length>60||job.length>200){nmDone(false,"Too long: name max 60, job max 200 characters.");return}
+ nmsend.disabled=true;nmmsg.textContent="Saving…";nmmsg.style.color="";
+ if(VS)VS.postMessage({type:"newMember",name,job});else nmDone(false,"Open this page from VS Code.")});
+if(VS){window.addEventListener("message",e=>{const d=e.data||{};if(d.type==="state"&&d.state&&d.state.members)render(d.state);else if(d.type==="newMemberResult")nmDone(!!d.ok,String(d.msg||""))});
+ VS.postMessage({type:"ready"})}
+else upd.textContent="Open this page from VS Code (Rebel Bot Swarm: Show).";
+</script></body></html>

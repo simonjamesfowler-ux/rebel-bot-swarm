@@ -1,0 +1,7 @@
+# The .vsix goes on the GitHub release, not in git
+*.vsix
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+node_modules/

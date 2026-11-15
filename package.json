@@ -1,0 +1,91 @@
+{
+  "name": "rebel-bot-swarm",
+  "displayName": "Rebel Bot Swarm",
+  "description": "See your Claude Code sessions as a team: status, original avatars, who holds what, and the messages between them. Local only.",
+  "version": "0.1.0",
+  "publisher": "simonjamesfowler-ux",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/simonjamesfowler-ux/rebel-bot-swarm"
+  },
+  "bugs": {
+    "url": "https://github.com/simonjamesfowler-ux/rebel-bot-swarm/issues"
+  },
+  "homepage": "https://github.com/simonjamesfowler-ux/rebel-bot-swarm",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
+  "keywords": [
+    "claude code",
+    "agents",
+    "team",
+    "sessions",
+    "dashboard"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "rebelBotSwarm.show",
+        "title": "Rebel Bot Swarm: Show"
+      }
+    ],
+    "configuration": {
+      "title": "Rebel Bot Swarm",
+      "properties": {
+        "rebelBotSwarm.boardFile": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Optional team board (Markdown) with `## Sessions`, `## Files being edited`, a `## ... slot` table and `## Waiting ...` list. See the guide in `docs/`. `~` = your home folder."
+        },
+        "rebelBotSwarm.privateMembers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Members (name or part of a name) whose messages stay hidden. Their status still shows."
+        },
+        "rebelBotSwarm.refreshSeconds": {
+          "type": "number",
+          "default": 5,
+          "minimum": 2,
+          "maximum": 60,
+          "description": "How often the open panel reads the session files."
+        },
+        "rebelBotSwarm.scope": {
+          "type": "string",
+          "enum": [
+            "workspace",
+            "all"
+          ],
+          "default": "workspace",
+          "enumDescriptions": [
+            "Sessions started in the open workspace folders",
+            "All live Claude Code sessions on this computer"
+          ],
+          "description": "Which sessions to show."
+        },
+        "rebelBotSwarm.avatarsFolder": {
+          "type": "string",
+          "default": "",
+          "description": "Optional folder of your own pictures (.png .jpg .svg) named after members. Empty = drawn avatars only."
+        },
+        "rebelBotSwarm.requestsFolder": {
+          "type": "string",
+          "default": "",
+          "description": "Optional folder for 'Add team member' request files. Empty = the button is hidden and the extension writes nothing."
+        }
+      }
+    }
+  }
+}
