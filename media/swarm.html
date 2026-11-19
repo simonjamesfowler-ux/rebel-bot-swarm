@@ -11,7 +11,7 @@ main{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:16px
 @media (max-width:900px){main{grid-template-columns:1fr}}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;cursor:pointer;display:flex;gap:10px}
-.card svg{flex:0 0 76px}.card>div{min-width:0}.card:hover{border-color:var(--accent)}.card.closed{opacity:.6}.card.closed .av{filter:grayscale(1)}
+.card svg{flex:0 0 76px}.card>div{min-width:0}.card:hover{border-color:var(--accent)}.card.grey{opacity:.6}.card.grey .av{filter:grayscale(1)}.card.grey:hover{opacity:.9}
 .av .mv{transform-box:fill-box;transform-origin:center}
 .av .blink{animation:blink 5.5s infinite}.av .bub{animation:bob 2s ease-in-out infinite}.av .zz{animation:zz 3s ease-in-out infinite}
 .av .twk{animation:twk 1.6s ease-in-out infinite}.av .twk.d2{animation-delay:.8s}
@@ -53,7 +53,14 @@ button{font:inherit;padding:5px 12px;border-radius:8px;border:1px solid var(--li
 button.main{background:var(--accent);color:var(--card);border-color:var(--accent)}#addbtn{margin-left:auto}
 #nmform label{display:block;font-size:12px;font-weight:600;margin:8px 0 3px}
 #nmform input{width:100%;font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
-#nmmsg{font-weight:600;min-height:1.4em}
+#nmmsg,#edmsg{font-weight:600;min-height:1.4em}
+#edform{border-top:1px solid var(--line);margin-top:10px}#edform h4{margin:8px 0 0;color:var(--accent)}
+#edform label{display:block;font-size:12px;font-weight:600;margin:8px 0 3px}
+#edform input,#edform textarea{width:100%;font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+#edform textarea{resize:vertical}.pick{display:flex;flex-wrap:wrap;gap:6px;max-height:160px;overflow:auto;padding:2px}
+.pick button{padding:2px;border-radius:50%;line-height:0;border:2px solid var(--line);background:var(--bg)}.pick button.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.pick svg{width:48px;height:48px}a.lnk{color:var(--accent);cursor:pointer;text-decoration:underline}
+dialog{width:min(560px,94vw)}
 header .slot{flex:1 1 300px;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 </style></head><body>
 <header><h1>Rebel Bot Swarm</h1><span class="slot" id="slot">Shared slot: -</span><span class="muted" id="upd"></span><button id="addbtn" class="main" type="button">+ Add team member</button></header>
@@ -64,9 +71,18 @@ header .slot{flex:1 1 300px;min-width:0;overflow:hidden;white-space:nowrap;text-
  </div>
  <section><h2>Messages between members</h2><div class="feed" id="feed"></div></section>
 </main>
-<dialog id="dlg"><div id="dlgbody"></div><p><button id="dlgclose" type="button">Close</button></p></dialog>
+<dialog id="dlg"><div id="dlgbody"></div>
+ <form id="edform" autocomplete="off"><h4>Edit this member</h4>
+  <label for="edname">Name on the panel (max 60 characters; empty = the session or board name)</label><input id="edname" maxlength="60">
+  <label>Avatar (our own drawings, or your pictures from the avatars folder)</label><div class="pick" id="edpick"></div>
+  <label for="edtask">Task: what it should do next (one line, max 300 characters)</label><input id="edtask" maxlength="300">
+  <label for="edrole">Role instructions (max 6000 characters; saved as a request for your coordinator)</label><textarea id="edrole" rows="9" maxlength="6000"></textarea>
+  <div class="muted" id="edinfo"></div>
+  <p class="muted" style="font-size:11px">Name and avatar change this panel only. Task and role instructions are saved as one request file
+  for your coordinator session (<a class="lnk" data-open="1">open the requests folder</a>). The panel never edits the agent files.</p>
+  <p id="edmsg"></p><p><button id="edsend" class="main" type="submit">Save</button> <button id="dlgclose" type="button">Close</button></p></form></dialog>
 <dialog id="nmdlg"><form id="nmform" method="dialog"><h3>Add team member</h3>
- <p class="muted">This saves one request file for your coordinator session to pick up.</p>
+ <p class="muted">This saves one request file for your coordinator session to pick up (<a class="lnk" data-open="1">open the requests folder</a>).</p>
  <label for="nmname">Name (max 60 characters)</label><input id="nmname" maxlength="60" required autocomplete="off">
  <label for="nmjob">The job, in one line (max 200 characters)</label><input id="nmjob" maxlength="200" required autocomplete="off">
  <p id="nmmsg"></p><p><button id="nmsend" class="main" type="submit">Save request</button> <button id="nmcancel" type="button">Close</button></p></form></dialog>
@@ -200,7 +216,7 @@ function overlay(st){
  if(st==="waiting for you")return `<g class="mv bub"><path d="M70 3 H92 Q98 3 98 9 V21 Q98 27 92 27 H83 L75 34 L77 27 H70 Q64 27 64 21 V9 Q64 3 70 3Z" fill="#fff" ${S(1.9)}/><text x="81" y="22.5" text-anchor="middle" font-size="19" font-weight="800" font-family="Segoe UI,Arial" style="fill:var(--wait)">?</text></g>`;
  if(st==="closed")return `<g class="mv zz" font-family="Segoe UI,Arial" font-weight="800" fill="#c8cede" stroke="${OL}" stroke-width=".6"><text x="74" y="22" font-size="13">z</text><text x="84" y="13" font-size="9">z</text></g>`;
  return ""}
-function avatar(m){const role=roleOf(m.name,m.job),h=hash(m.name),k="a"+h.toString(36),st=m.status==="ready"?"idle":m.status,ring=COL[m.status]||"var(--idle)";
+function avatar(m){const role=m.style||roleOf(m.name,m.job),h=hash(m.name),k="a"+h.toString(36),st=m.status==="ready"?"idle":m.status,ring=COL[m.status]||"var(--idle)";
  const [hu]=hsl(okc(m.colour));
  const C={k,col:tone(m.colour),light:tone(m.colour,.2),dark:tone(m.colour,-.16),acc:hx([(hu+160)%360,.75,.6])};
  const defs=`<defs><radialGradient id="bg${k}" cx=".5" cy=".42" r=".62"><stop offset="0" stop-color="${tone(m.colour,-.22)}"/><stop offset="1" stop-color="#070a1a"/></radialGradient>`+
@@ -212,33 +228,56 @@ function avatar(m){const role=roleOf(m.name,m.job),h=hash(m.name),k="a"+h.toStri
  else if(BOTS[role]){const r=BOTS[role](st,C);inner=space(C,h)+r.in;front=r.front}
  else{const hd=HEADS[HEAD_OF[role]||"human"](C,st,h,role),p=ROLE_ART[role](C);
   inner=space(C,h)+hd.back+suit(C,hd.neck)+(p.pre||"")+hd.head+(p.top||"");front=p.front||""}
- return `<svg class="av ${st==="working"?"working":""}" width="76" height="76" viewBox="0 0 100 100" role="img" aria-label="${esc(m.name)}: ${esc(st)}">${defs}<g clip-path="url(#cl${k})">${inner}</g>`+
+ return `<svg class="av ${st==="working"?"working":""}" width="76" height="76" viewBox="0 0 100 100" role="img" aria-label="${esc(m.display||m.name)}: ${esc(st)}">${defs}<g clip-path="url(#cl${k})">${inner}</g>`+
   `<circle cx="50" cy="50" r="44.3" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="1"/><circle cx="50" cy="50" r="46.5" fill="none" style="stroke:${ring}" stroke-width="4.2"/>${front}${overlay(st)}</svg>`}
 let last={};
 // Data comes from the VS Code extension by postMessage only. No network.
 const VS=typeof acquireVsCodeApi==="function"?acquireVsCodeApi():null;
 const CLOSED_HINT="Closed: reopen this session to send it work";
+const STYLE_LABEL={crew:"Space crew",coord:"Coordinator",cad:"CAD",draught:"Draughtsman",research:"Researcher",cabinet:"Cabinet maker",teacher:"Teacher",family:"Personal",books:"Books",kitchen:"Kitchen",fitter:"Fitter",postbot:"Post bot",cleanbot:"Clean bot",tablet:"Tablet bot"};
+let edM=null,edAv="auto";
+function pickRender(){const m=edM,base={name:m.name,job:m.job,colour:m.colour,status:"ready",since:"",extra:"",files:[],slot:false};
+ const items=[["auto","Automatic (the drawing for its job)",avatar({...base,style:"",pic:""})]];
+ for(const s of (last.styles||[]))items.push(["style:"+s,STYLE_LABEL[s]||s,avatar({...base,style:s,pic:""})]);
+ for(const p of (last.pics||[]))items.push(["pic:"+p.file,"Picture: "+p.file,avatar({...base,style:"",pic:p.url})]);
+ edpick.innerHTML=items.map(([v,t,svg])=>`<button type="button" class="${v===edAv?"sel":""}" data-v="${esc(v)}" title="${esc(t)}" aria-label="${esc(t)}" aria-pressed="${v===edAv}">${svg}</button>`).join("");
+ edpick.insertAdjacentHTML("beforeend",(last.pics||[]).length?"":`<span class="muted" style="align-self:center;font-size:11px">${last.avatarsSet?"No pictures in the avatars folder yet (.png .jpg .svg).":"To use your own pictures, set rebelBotSwarm.avatarsFolder."}</span>`)}
+edpick.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;edAv=b.dataset.v;pickRender();edsend.disabled=false;edmsg.textContent=""});
+function edDone(ok,msg){edmsg.textContent=msg;edmsg.style.color=ok?"var(--work)":"var(--wait)";edsend.disabled=ok}
+edform.addEventListener("input",()=>{edsend.disabled=false;edmsg.textContent=""});
+function roleIn(d){if(!edM||d.id!==edM.id)return;edrole.disabled=false;
+ if(d.found&&!d.too_long){edrole.value=d.body;edinfo.textContent="Filled from the agent file (agent files are only read here)."}
+ else if(d.too_long){edrole.value="";edinfo.textContent="The agent file is longer than "+d.limit+" characters, so the box is empty: write only the change you want."}
+ else{edrole.value="";edinfo.textContent="No agent file for this member: write the role here if you want one."}}
+edform.addEventListener("submit",e=>{e.preventDefault();if(!edM)return;
+ const data={member:edM.id,name:edname.value.trim(),avatar:edAv,task:edtask.value.trim(),role_instructions:edrole.value};
+ if(data.name.length>60||data.task.length>300||data.role_instructions.length>6000){edDone(false,"Too long: name max 60, task max 300, role instructions max 6000 characters.");return}
+ edsend.disabled=true;edmsg.textContent="Saving…";edmsg.style.color="";
+ if(VS)VS.postMessage({type:"editMember",...data});else edDone(false,"Open this page from VS Code.")});
+document.addEventListener("click",e=>{if(e.target.closest("a[data-open]")&&VS)VS.postMessage({type:"openRequests"})});
 function show(i){const m=last.members[i];if(!m)return;
- dlgbody.innerHTML=`<h3>${esc(m.name)}</h3><p>Status: <b>${esc(m.status)}</b> ${esc(m.since)} ${esc(m.extra)}</p>`+
+ edM=m;edAv=m.avatar||"auto";edname.value=m.display||"";edtask.value="";edmsg.textContent="";edsend.disabled=false;edform.hidden=!m.id;pickRender();
+ edrole.value="";edrole.disabled=true;edinfo.textContent="Reading the agent file…";if(VS&&m.id)VS.postMessage({type:"getRole",id:m.id});
+ dlgbody.innerHTML=`<h3>${esc(m.display||m.name)}${m.display?` <span class="muted" style="font-weight:400;font-size:12px">(${esc(m.name)})</span>`:""}</h3><p>Status: <b>${esc(m.status)}</b> ${esc(m.since)} ${esc(m.extra)}</p>`+
  (m.status==="ready"?`<p><b>Ready.</b> Idle and available: the coordinator starts it as a background helper when a job needs it.</p>`:"")+(m.status==="closed"?`<p><b>${CLOSED_HINT}.</b> A closed tab ends the session: no member can reach it until it is reopened.</p>`:"")+`<p>${esc(m.job)}</p>`+
  (m.sid?`<p><b>To open this session:</b> in VS Code, open the Claude Code panel, then its past conversations list, and pick "${esc(m.name)}".<br>
  Or in a terminal: <code>claude --resume ${esc(m.sid)}</code></p>`:`<p>To reopen: in the Claude Code panel, open the past conversations list and pick "${esc(m.name)}" by its title.</p>`)+
  (m.files.length?`<p><b>Files booked:</b><br>${m.files.map(esc).join("<br>")}</p>`:"");dlg.showModal()}
 cards.addEventListener("click",e=>{const c=e.target.closest(".card");if(c)show(+c.dataset.i)});
 dlgclose.addEventListener("click",()=>dlg.close());
-function render(s){last=s;addbtn.hidden=!s.requests;
+function render(s){last=s;
  slot.textContent="Shared slot: "+(s.holder||"free").replace(/\*/g,"").slice(0,140);upd.textContent="updated "+s.updated+(s.error?"  ERROR "+s.error:"");
  const order={"working":0,"waiting for you":1,"idle":2,"ready":2,"closed":3};
  const idx=s.members.map((m,i)=>i).sort((a,b)=>(order[s.members[a].status]??4)-(order[s.members[b].status]??4));
- const ch=idx.map(i=>{const m=s.members[i],cl=m.status==="closed";return `<div class="card ${cl?"closed":""}" data-i="${i}">${avatar(m)}
-  <div><div class="name">${esc(m.name)}</div><div class="status" style="color:${COL[m.status]||"var(--idle)"}">${esc(m.status)}${m.since?" · "+esc(m.since):""}</div>
+ const ch=idx.map(i=>{const m=s.members[i],cl=m.status==="closed",gr=cl||m.status==="ready"||m.status==="idle";return `<div class="card ${gr?"grey":""}" data-i="${i}">${avatar(m)}
+  <div><div class="name">${esc(m.display||m.name)}</div><div class="status" style="color:${gr?"var(--idle)":COL[m.status]||"var(--idle)"}">${esc(m.status)}${m.since?" · "+esc(m.since):""}</div>
   ${cl?`<div class="hint">${CLOSED_HINT}</div>`:""}
   ${m.slot?'<span class="tag">holds the shared slot</span>':""}${m.files.length?`<span class="tag">${m.files.length} file group(s) booked</span>`:""}
   <div class="job">${esc(m.job)}</div></div></div>`}).join("");
  if(ch!==cards._h){cards.innerHTML=ch;cards._h=ch}   // same cards: keep the animations running
  wait.innerHTML=s.waiting.map(w=>`<li>${esc(w.slice(0,260))}${w.length>260?"…":""}</li>`).join("")||"<li class='muted'>Nothing listed</li>";
  feed.innerHTML=s.feed.map(f=>`<div class="msg"><div class="hd">${esc(f.time)} · <b>${esc(f.from)}</b> → <b>${esc(f.to)}</b></div>${esc(f.text)}</div>`).join("")||"<div class='msg muted'>No messages yet</div>";}
-// ADD TEAM MEMBER (optional): one request file in your requests folder; the panel's only write
+// ADD TEAM MEMBER: one request file in the requests folder (your setting, or VS Code's storage folder for this extension)
 addbtn.addEventListener("click",()=>{nmmsg.textContent="";nmsend.disabled=false;nmdlg.showModal();nmname.focus()});
 nmcancel.addEventListener("click",()=>nmdlg.close());
 function nmDone(ok,msg){nmmsg.textContent=msg;nmmsg.style.color=ok?"var(--work)":"var(--wait)";nmsend.disabled=ok;if(ok){nmname.value="";nmjob.value=""}}
@@ -247,7 +286,7 @@ nmform.addEventListener("submit",async e=>{e.preventDefault();const name=nmname.
  if(name.length>60||job.length>200){nmDone(false,"Too long: name max 60, job max 200 characters.");return}
  nmsend.disabled=true;nmmsg.textContent="Saving…";nmmsg.style.color="";
  if(VS)VS.postMessage({type:"newMember",name,job});else nmDone(false,"Open this page from VS Code.")});
-if(VS){window.addEventListener("message",e=>{const d=e.data||{};if(d.type==="state"&&d.state&&d.state.members)render(d.state);else if(d.type==="newMemberResult")nmDone(!!d.ok,String(d.msg||""))});
+if(VS){window.addEventListener("message",e=>{const d=e.data||{};if(d.type==="state"&&d.state&&d.state.members)render(d.state);else if(d.type==="newMemberResult")nmDone(!!d.ok,String(d.msg||""));else if(d.type==="role")roleIn(d);else if(d.type==="editResult")edDone(!!d.ok,String(d.msg||""))});
  VS.postMessage({type:"ready"})}
 else upd.textContent="Open this page from VS Code (Rebel Bot Swarm: Show).";
 </script></body></html>

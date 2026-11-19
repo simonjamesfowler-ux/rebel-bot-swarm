@@ -1,8 +1,8 @@
 {
   "name": "rebel-bot-swarm",
   "displayName": "Rebel Bot Swarm",
-  "description": "See your Claude Code sessions as a team: status, original avatars, who holds what, and the messages between them. Local only.",
-  "version": "0.1.1",
+  "description": "See your Claude Code sessions as a team: status, original avatars, who holds what, the messages between them, and a card edit panel. Local only.",
+  "version": "0.2.0",
   "publisher": "simonjamesfowler-ux",
   "license": "MIT",
   "repository": {
@@ -14,6 +14,10 @@
   },
   "homepage": "https://github.com/simonjamesfowler-ux/rebel-bot-swarm",
   "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#14152b",
+    "theme": "dark"
+  },
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -37,6 +41,10 @@
       {
         "command": "rebelBotSwarm.show",
         "title": "Rebel Bot Swarm: Show"
+      },
+      {
+        "command": "rebelBotSwarm.openRequests",
+        "title": "Rebel Bot Swarm: Open requests folder"
       }
     ],
     "configuration": {
@@ -83,7 +91,17 @@
         "rebelBotSwarm.requestsFolder": {
           "type": "string",
           "default": "",
-          "description": "Optional folder for 'Add team member' request files. Empty = the button is hidden and the extension writes nothing."
+          "markdownDescription": "Folder for the request files from **Add team member** and the edit panel (task and role instructions), for your coordinator session to read. Empty = VS Code's storage folder for this extension (command **Rebel Bot Swarm: Open requests folder**). `~` = your home folder."
+        },
+        "rebelBotSwarm.membersFile": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "File that keeps the names and avatars you choose in the edit panel (JSON; a backup is made before each change). Empty = `members.json` in VS Code's storage folder for this extension. `~` = your home folder."
+        },
+        "rebelBotSwarm.agentCards": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Also show a **ready** card for each agent file in `~/.claude/agents/` that has no card yet (name from the file name, job from its `description:` line)."
         }
       }
     }

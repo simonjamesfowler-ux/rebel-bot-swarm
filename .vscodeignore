@@ -1,0 +1,7 @@
+.git/**
+.gitignore
+*.vsix
+build_vsix.py
+media/icon.svg
+docs/**
+MARKETPLACE STEPS FOR SIMON.md
