@@ -2,7 +2,7 @@
   "name": "rebel-bot-swarm",
   "displayName": "Rebel Bot Swarm",
   "description": "A dashboard for your Claude Code team: Spark a new chat, status, original avatars, who is working on what, live progress, comms lines, member brains, Save team / Restore team. Local only.",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "publisher": "simonjamesfowler-ux",
   "license": "MIT",
   "repository": {
@@ -122,6 +122,18 @@
           "type": "boolean",
           "default": false,
           "markdownDescription": "Show a card for a live session that still has its default title (the project-folder name, for example `my-project` or `my-project-e4`) and is not on the board. Off = such sessions are hidden."
+        },
+        "rebelBotSwarm.condenseTokens": {
+          "type": "number",
+          "default": 250000,
+          "minimum": 10000,
+          "markdownDescription": "A member card highlights its **Condense** button when that chat's context is this many tokens or more (read from the last reply in the chat transcript). The button also lights up when the board job says done."
+        },
+        "rebelBotSwarm.condensePrompt": {
+          "type": "string",
+          "editPresentation": "multilineText",
+          "default": "BRAIN SAVE before {action}. You are {member}. Before this chat is {actionPast}, write what you learned on your last task to your brain: your memory files (MEMORY.md and its notes) or the team wiki, as your own rules say. Add one log line for the job, and each MISTAKE: and LESSON: line. Write the state of any open work so that a fresh chat can continue it. Do not start new work.\nWhen this is done, reply with ONE line: \"BRAIN SAVED - you can {actionNext} now.\"",
+          "markdownDescription": "The prompt that **Condense** puts on the clipboard (and in the member's chat box when the chat is not open), so the member saves its lessons to its brain first. `{member}`, `{action}` (condense / restart), `{actionPast}` (condensed / restarted), `{actionNext}` (type /compact / close this chat and start a new one). Empty = the default text."
         },
         "rebelBotSwarm.decidePrompt": {
           "type": "string",

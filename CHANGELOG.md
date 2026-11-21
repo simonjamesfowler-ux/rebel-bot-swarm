@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.2
+- **Spark opens beside the dashboard.** The new Claude Code chat now opens in the editor group to the RIGHT of the
+  dashboard, so the dashboard stays in view. If that group is there already, it is used again (no new split on each
+  click). Decide uses the same place when it opens the leader's chat. If the dashboard is not open, or the Claude
+  Code command fails, the chat opens in Claude Code's default place.
+- **Condense button on each card** (cards with an open chat). It works only when the chat is safe to condense or
+  restart: idle, no helper it started still running, nothing waiting, no open board item names the member, board job not still running (the tooltip says
+  why when it is off). The card shows the chat's context size; the button is orange and pulses when the chat is large
+  (new setting `rebelBotSwarm.condenseTokens`, default 250000) or the board job says done. Click: choose **Condense**
+  (`/compact`) or **Restart** (new chat). The member first saves its lessons to its brain: the BRAIN SAVE prompt (new
+  setting `rebelBotSwarm.condensePrompt`) goes on the clipboard and the member's chat comes to the front; a
+  `CONDENSE <time>.json` request file goes to the requests folder.
+
 ## 0.4.1
 - **Decide button fixed (request file first, toast, output channel).** A click now writes the `DECIDE <time>.json`
   request file FIRST, then tries to open the leader's chat. Every click shows one VS Code notice: `Decide sent to

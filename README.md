@@ -90,8 +90,23 @@ leader card has a violet border and a **LEAD** badge (a violet ring in Network v
 leader's name (board row or edit-panel name); if there is none, the board row whose job says coordinator or leader;
 if there is none, a new ready card. The new chat tab keeps Claude Code's own name: Claude Code can rename a tab only
 after its first message, and it asks you for the name (command **Claude Code: Rename Session Tab**).
-Spark uses Claude Code commands that are not a public interface. If they do not work, the prompt goes on the
+The new chat opens in the editor group to the right of the dashboard, so the dashboard stays in view (that group is
+used again on the next click). Spark uses Claude Code commands that are not a public interface. If they do not work, the prompt goes on the
 clipboard and the Claude Code side bar opens: paste the prompt there.
+
+## Condense or restart a chat
+
+Each card with an open chat has a **Condense ▾** button and the chat's context size (for example `300k`). The
+button works only when it is safe: the member is idle (no helper running, none it started still running, not waiting for you), no open "Waiting for"
+item on the board names the member, and the board job does not say it is still running (in progress, working on...).
+Hover over a grey button to see why it is off. The button is orange and pulses when the chat is large (setting
+`rebelBotSwarm.condenseTokens`, default 250000) or the board job says done.
+
+Click it and choose **Condense** (`/compact`) or **Restart** (a new chat). First the member saves what it learned to its
+brain: the BRAIN SAVE prompt (setting `rebelBotSwarm.condensePrompt`) goes on the clipboard and the member's chat comes
+to the front (Claude Code fills the chat box only if the chat was not open). Paste it, send it, and when the member
+replies "BRAIN SAVED", type `/compact` (or close the chat and click **New chat** in the notice). A `CONDENSE <time>.json`
+request file goes to the requests folder for your leader.
 
 ## Keep your team safe
 
@@ -141,6 +156,8 @@ Works on Windows, macOS and Linux with VS Code 1.80 or later and Claude Code.
 | `rebelBotSwarm.sparkPrompt` | (default text) | The Spark starter prompt; `{leader}` and `{leaderRole}` are filled in. |
 | `rebelBotSwarm.leaderSessionId` | (empty) | Your leader's own chat (its session id). **Decide ▸** puts `DECIDE: <item>` in this chat and writes a `DECIDE <time>.json` request file. Empty = the newest chat whose tab title starts with the leader name. |
 | `rebelBotSwarm.decidePrompt` | (default text) | The prompt that **Decide ▸** puts in a new chat when no leader chat is found; `{leader}`, `{leaderRole}`, `{item}`, `{board}`, `{requestsFolder}` are filled in. |
+| `rebelBotSwarm.condenseTokens` | 250000 | A card highlights **Condense** when its chat context is this many tokens or more. |
+| `rebelBotSwarm.condensePrompt` | (default text) | The BRAIN SAVE prompt that **Condense** gives the member before `/compact` or a restart; `{member}`, `{action}`, `{actionPast}`, `{actionNext}` are filled in. |
 | `rebelBotSwarm.showUnnamedSessions` | `false` | Show a card for a session that still has its default title (the folder name) and is not on the board. |
 
 Command **Rebel Bot Swarm: Open requests folder** opens the folder where the request files are saved.

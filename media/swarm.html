@@ -61,6 +61,10 @@ main{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:14
 .job{font-size:10.5px;line-height:1.3;color:var(--muted);margin-top:2px;max-height:2.6em;overflow:hidden}
 .tag{display:inline-block;font-size:10px;padding:0 5px;border-radius:7px;background:var(--bg);margin:2px 2px 0 0}
 .card .hint{font-size:10px;margin-top:1px}
+.cact{display:flex;gap:5px;align-items:center;margin-top:3px}.cond{font-size:10px;padding:0 6px;line-height:16px;white-space:nowrap}.cond:disabled{opacity:.45;cursor:not-allowed}
+.cond.now{background:var(--wait);color:#1b1b1b;font-weight:700;border-color:var(--wait);animation:condp 2s ease-in-out infinite}@keyframes condp{50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--wait) 35%,transparent)}}
+.ctx{font-size:10px;color:var(--muted)}.ctx.big{color:var(--wait);font-weight:700}.card.grey:has(.cond.now){opacity:1}.card.grey:has(.cond.now) .av{filter:none}.grid.net .cact{display:none}
+@media (prefers-reduced-motion:reduce){.cond.now{animation:none}}
 /* the team leader: violet border, left bar and LEAD badge; still clear when idle (grey) */
 .card.lead{border:2px solid var(--lead);box-shadow:inset 4px 0 0 var(--lead);padding-left:8px}.card.lead:hover{border-color:var(--lead)}.card.lead.grey{opacity:.85}.tag.lead{background:var(--lead);color:var(--leadink);font-weight:700;letter-spacing:.4px}.card.lead .name{color:var(--lead);font-weight:700}
 #teamwrap{position:relative}#links{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;overflow:visible}
@@ -410,7 +414,11 @@ function show(i){const m=last.members[i];if(!m)return;
  (m.sid?`<p><b>To open this session:</b> in VS Code, open the Claude Code panel, then its past conversations list, and pick "${esc(m.name)}".<br>
  Or in a terminal: <code>claude --resume ${esc(m.sid)}</code></p>`:`<p>To reopen: in the Claude Code panel, open the past conversations list and pick "${esc(m.name)}" by its title.</p>`)+
  (m.files.length?`<p><b>Files booked:</b><br>${m.files.map(esc).join("<br>")}</p>`:"");dlg.showModal()}
-cards.addEventListener("click",e=>{const c=e.target.closest(".card");if(c)show(+c.dataset.i)});
+// CONDENSE: one button per card with an open chat; enabled only when safe (idle, nothing waiting, job not running);
+// highlighted with a badge when the chat is large or the job is done. The extension asks Condense or Restart.
+function condBtn(m){if(!m.sid)return"";const k=m.ctx?Math.round(m.ctx/1000)+"k":"";
+ return `<div class="cact"><button type="button" class="cond${m.condenseNow?" now":""}" data-id="${esc(m.id||"")}"${m.canCondense?"":" disabled"} title="${esc(m.condenseWhy||"")}">${m.condenseNow?"&#9888; ":""}Condense &#9662;</button>${k?`<span class="ctx${m.condenseNow?" big":""}" title="Context of this chat now (tokens)">${k}</span>`:""}</div>`}
+cards.addEventListener("click",e=>{const b=e.target.closest("button.cond");if(b){e.stopPropagation();if(!b.disabled&&VS)VS.postMessage({type:"condense",id:b.dataset.id});return}const c=e.target.closest(".card");if(c)show(+c.dataset.i)});
 for(const b of document.querySelectorAll(".dlgx"))b.addEventListener("click",()=>dlg.close());
 // BRAIN: the member's own Markdown notes (Claude Code's subagent memory if there is one, else the panel's brains folder)
 function brainIn(d){if(!edM||d.id!==edM.id)return;
@@ -457,7 +465,7 @@ function render(s){last=s;if(!startSet){startSet=true;startShow(!!s.startOpen)}c
   <div><div class="name">${esc(m.display||m.name)}</div><div class="status" style="color:${gr?"var(--idle)":COL[m.status]||"var(--idle)"}">${esc(m.status)}${m.since?" · "+esc(m.since.replace(/^\d+ \w+ /,"")):""}</div>
   ${cl?`<div class="hint" title="${CLOSED_HINT}">closed: reopen to send work</div>`:""}
   ${m.leader?'<span class="tag lead" title="Team leader">&#9733; LEAD</span>':""}${m.slot?'<span class="tag">holds the shared slot</span>':""}${m.files.length?`<span class="tag">${m.files.length} file group(s) booked</span>`:""}
-  <div class="job">${esc(m.job)}</div></div></div>`}).join("");
+  <div class="job">${esc(m.job)}</div>${condBtn(m)}</div></div>`}).join("");
  if(ch!==cards._h){cards.innerHTML=ch;cards._h=ch}   // same cards: keep the animations running
  wait.innerHTML=s.waiting.map((w,k)=>`<li><button type="button" class="decide" data-k="${k}" title="Ask your leader to decide this item (in the leader's own chat)">Decide &#9656;</button><span class="wt">${esc(w.slice(0,260))}${w.length>260?"…":""}</span></li>`).join("")||"<li class='muted'>Nothing listed</li>";
  feed.innerHTML=s.feed.map(f=>`<div class="msg"><div class="hd">${esc(f.time)} · <b>${esc(f.from)}</b> → <b>${esc(f.to)}</b>${f.kind&&f.kind!=="message"?`<span class="kind">${esc(f.kind)}</span>`:""}</div>${esc(f.text)}</div>`).join("")||"<div class='msg muted'>No messages yet</div>";

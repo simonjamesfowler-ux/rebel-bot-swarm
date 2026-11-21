@@ -382,7 +382,7 @@ function buildState(cfg, picUri) {
   const byName = n => { const f = firstWord(n); return members.find(m => m.name === n || m.display === n) || members.find(m => f && firstWord(m.name) === f) || null; };
   const msgs = [];   // {ts, from, to, text, kind, fromId?, toId?}
   // helpers (subagents): who works now, their steps, the brief from the coordinator and the hand-back
-  const working = [], steps = [], helperIds = {};
+  const working = [], steps = [], helperIds = {}, busyParents = new Set();
   for (const { p, st, parent } of helperFiles(dirs)) {
     const h = helperInfo(p, st);
     if (!h) continue;
@@ -395,6 +395,7 @@ function buildState(cfg, picUri) {
     const last = h.steps[h.steps.length - 1];
     helperIds[path.basename(p, ".jsonl").replace(/^agent-/, "")] = { who, id: m ? m.id : "", hide };
     if (running) {
+      busyParents.add(parent);
       working.push({ who, id: m ? m.id : "", task: hide ? "(private)" : h.task, step: hide ? "" : (last ? last.text : "starting"),
                      time: last ? fmt(new Date(last.ts)) : fmt(new Date(st.mtimeMs)), ts: last ? last.ts : new Date(st.mtimeMs).toISOString() });
       if (m && (m.status === "ready" || m.status === "idle")) {
@@ -422,6 +423,7 @@ function buildState(cfg, picUri) {
     out.push({ time: isNaN(d) ? x.ts : fmt(d), ts: x.ts, from: x.from, to: x.to, text: x.text, kind: x.kind });
     if (fm && tm && fm !== tm && !isNaN(d)) links.push({ from: fm.id, to: tm.id, ts: d.getTime(), kind: x.kind });
   }
+  condenseInfo(members, dirs, b.waiting, cfg.condenseTokens, busyParents);
   const log = b.log.slice(-40).reverse().map(l => ({ date: l.date, who: l.who, text: isPriv(l.who) || isPriv(l.text) ? "(private)" : l.text }));
   const now = new Date();
   return { updated: `${p2(now.getHours())}:${p2(now.getMinutes())}:${p2(now.getSeconds())}`, now: now.getTime(), holder: b.holder, waiting: b.waiting,
@@ -685,6 +687,76 @@ function newMemberRequest(data, requestsFolder) {
   return { ok: true, msg: "Request saved for your coordinator" };
 }
 
+// ---- Condense / Restart: a member's chat may be condensed (/compact) or restarted only when it is safe.
+const CTX_TAIL = 600000, ctxCache = new Map();   // file -> { size, mtime, tokens }
+/** Context size of a chat now: input + cache tokens of the last main-chain assistant reply (0 = not known). */
+function contextTokens(sid, dirs) {
+  if (!/^[0-9a-f-]{36}$/i.test(String(sid || ""))) return 0;
+  for (const dir of dirs) {
+    const file = path.join(dir, sid + ".jsonl");
+    let st;
+    try { st = fs.statSync(file); } catch (e) { continue; }
+    const c = ctxCache.get(file);
+    if (c && c.size === st.size && c.mtime === st.mtimeMs) return c.tokens;
+    let tokens = 0, fd;
+    try {
+      const len = Math.min(st.size, CTX_TAIL), buf = Buffer.alloc(len);
+      fd = fs.openSync(file, "r"); fs.readSync(fd, buf, 0, len, st.size - len);
+      const lines = buf.toString("utf8").split("\n");
+      for (let i = lines.length - 1; i >= 0; i--) {
+        const ln = lines[i];
+        if (!ln.includes('"usage"') || !ln.includes('"assistant"')) continue;
+        let e; try { e = JSON.parse(ln); } catch (x) { continue; }
+        if (e.type !== "assistant" || e.isSidechain) continue;
+        const u = (e.message || {}).usage;
+        if (!u) continue;
+        tokens = (u.input_tokens || 0) + (u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0);
+        break;
+      }
+    } catch (e) { tokens = 0; } finally { if (fd !== undefined) try { fs.closeSync(fd); } catch (x) { /* closed */ } }
+    ctxCache.set(file, { size: st.size, mtime: st.mtimeMs, tokens });
+    return tokens;
+  }
+  return 0;
+}
+const STOP = new Set(["the", "and", "for", "new", "our", "your", "team", "all", "one", "two", "this", "that", "with", "from", "main", "chat", "task", "job", "app"]);
+const JOB_OPEN = /\b(in progress|working on|doing|wip|started|running|busy)\b/i, JOB_DONE = /\b(done|finished|complete[d]?|handed back)\b/i;
+/** Sets m.ctx (tokens), m.canCondense, m.condenseWhy (why not, or why now) and m.condenseNow (suggest it) on each card.
+ * Safe = an open chat, no helper it started still running, status idle (no helper running, not waiting for you), no open board item names the member,
+ * and the board job does not say it is still running. Suggest = safe and (context >= limit or the job says done). */
+function condenseInfo(members, dirs, waiting, limit, busyParents) {
+  const lim = Number(limit) > 0 ? Number(limit) : 250000;
+  for (const m of members) {
+    m.ctx = m.sid ? contextTokens(m.sid, dirs) : 0;
+    // the member's short name ("Babu Frik" of "Babu Frik - CAD") or its first word, if that word is a real name
+    const keys = [m.display, m.name].filter(Boolean).flatMap(n => { const s = String(n).split(" - ")[0].split(" (")[0].toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+      const f = s.split(" ")[0] || ""; return [s, f.length >= 3 && !STOP.has(f) ? f : ""]; }).filter(Boolean);
+    const named = (waiting || []).some(w => { const t = " " + String(w).toLowerCase().replace(/[^a-z0-9]+/g, " ") + " ";
+      return keys.some(k => t.includes(" " + k + " ")); });
+    const why = !m.sid ? "no open chat" : busyParents && busyParents.has(m.sid) ? "a helper it started is still running" : m.status !== "idle" ? `not idle (${m.status})` : m.extra ? "waiting: " + m.extra
+      : named ? "an open board item names this member" : JOB_OPEN.test(m.job || "") && !JOB_DONE.test(m.job || "") ? "the board job is still running" : "";
+    m.canCondense = !why;
+    const big = m.ctx >= lim;
+    m.condenseNow = m.canCondense && (big || JOB_DONE.test(m.job || ""));
+    m.condenseWhy = why ? "Not safe now: " + why + "." : big ? `Chat is large (${Math.round(m.ctx / 1000)}k, limit ${Math.round(lim / 1000)}k): condense or restart to save tokens.`
+      : m.condenseNow ? "Job done: condense or restart to save tokens." : "Safe to condense or restart.";
+  }
+}
+/** Condense/Restart request for the leader (CONDENSE <time>.json): type, mode, member, session, context tokens. */
+function condenseRequest(m, mode, requestsFolder) {
+  const dir = expandHome(requestsFolder);
+  if (!dir || !m) return { ok: false, msg: "Not saved: no requests folder or member." };
+  const t = stamp(), body = JSON.stringify({ type: "condense", mode: mode === "restart" ? "restart" : "compact", member: m.display || m.name,
+    session: m.sid || "", contextTokens: m.ctx || 0, time: t.iso, from: "Condense" }, null, 2);
+  try { fs.mkdirSync(dir, { recursive: true }); } catch (e) { return { ok: false, msg: "Not saved: " + ((e && e.message) || e.code || "folder error") }; }
+  for (let n = 1; n <= 20; n++) {
+    const file = `CONDENSE ${t.file}${n > 1 ? " " + n : ""}.json`;
+    try { fs.writeFileSync(path.join(dir, file), body, { encoding: "utf8", flag: "wx" }); return { ok: true, file }; }
+    catch (e) { if (!e || e.code !== "EEXIST") return { ok: false, msg: "Not saved: " + ((e && e.message) || e.code || "write error") }; }
+  }
+  return { ok: false, msg: "Not saved: 20 requests in one second." };
+}
+
 /** Decide: one request file for the leader, who watches the requests folder and asks the question in its own chat. */
 function decideRequest(item, requestsFolder) {
   const dir = expandHome(requestsFolder), it = String(item || "").replace(/\s+/g, " ").trim().slice(0, 1500);
@@ -753,4 +825,4 @@ function findLeaderSession(leader, projectsDir) {
 }
 
 module.exports = { buildState, newMemberRequest, editMember, roleInfo, brainInfo, brainFor, createBrain, savePicture, digestRequest,
-  matchAgent, agentIndex, expandHome, decideRequest, findWaiting, normItem, findLeaderSession, _resetLimit: () => { lastRequest = 0; } };
+  matchAgent, agentIndex, expandHome, decideRequest, findWaiting, condenseRequest, contextTokens, condenseInfo, normItem, findLeaderSession, _resetLimit: () => { lastRequest = 0; } };

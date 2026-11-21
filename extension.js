@@ -10,6 +10,7 @@
 const vscode = require("vscode"), fs = require("fs"), path = require("path"), crypto = require("crypto");
 const core = require("./core.js"), backup = require("./backup.js");
 
+let lastCondense = new Map();
 let panel = null, timer = null, store = "", lastWaiting = [], lastIds = [], lastPriv = new Set(), lastPrivNames = [], attach = null, ext = null, gstate = null;
 let out = null, loadedStamp = "";
 
@@ -40,6 +41,7 @@ function cfg() {
     requestsFolder: requestsFolder || (store && path.join(store, "requests")), requestsSet: !!requestsFolder,
     leaderName: leaderName(), leaderRole: String(c.get("leaderRole", "") || "").trim().slice(0, 120) || "the team leader and coordinator",
     showUnnamedSessions: c.get("showUnnamedSessions", false) === true,
+    condenseTokens: Math.max(10000, Number(c.get("condenseTokens", 250000)) || 250000),
     refresh: Math.min(60, Math.max(2, Number(c.get("refreshSeconds", 5)) || 5)),
     workspaceFolders: (vscode.workspace.workspaceFolders || []).map(f => f.uri.fsPath) };
 }
@@ -68,6 +70,7 @@ function push() {
   state.startOpen = startOpen(); state.leaderName = c.leaderName;
   lastIds = (state.members || []).map(x => x.id).filter(Boolean);
   lastWaiting = Array.isArray(state.waiting) ? state.waiting.slice() : [];
+  lastCondense = new Map((state.members || []).filter(x => x.id).map(x => [x.id, x]));
   lastPriv = new Set((state.members || []).filter(x => x.private).map(x => x.id));
   lastPrivNames = (state.members || []).filter(x => x.private).map(x => x.name).filter(Boolean);
   panel.webview.postMessage({ type: "state", state });
@@ -371,7 +374,7 @@ async function decideInLeader(sid, item) {
   const it = String(item || "").replace(/\s+/g, " ").trim().slice(0, 1500);
   const prompt = `DECIDE: ${it} — ask me this as one multiple-choice question.`;
   if (!vscode.extensions.getExtension(CLAUDE_EXT)) { log("Decide: Claude Code extension not found"); return "file"; }
-  try { await vscode.commands.executeCommand("claude-vscode.primaryEditor.open", sid, prompt); return "leader"; }
+  try { await openClaudeChat(sid, prompt); return "leader"; }
   catch (e) { log("Decide: claude-vscode.primaryEditor.open failed: " + ((e && e.message) || e)); }
   try {
     const uri = vscode.Uri.parse(`${vscode.env.uriScheme || "vscode"}://${CLAUDE_EXT}/open?session=${encodeURIComponent(sid)}&prompt=${encodeURIComponent(prompt)}`);
@@ -379,6 +382,23 @@ async function decideInLeader(sid, item) {
     log("Decide: the open link was refused");
   } catch (e) { log("Decide: open link failed: " + ((e && e.message) || e)); }
   return "file";
+}
+/** The editor group to the RIGHT of the dashboard (dashboard column + 1). VS Code reuses that group if it exists and
+ * makes it only if it does not, so each click does not make a new split. undefined = the dashboard is not open. */
+function besideColumn() {
+  const col = panel && panel.viewColumn;
+  return typeof col === "number" && col >= 1 ? Math.min(col + 1, 9) : undefined;
+}
+/** Open a Claude Code chat (sessionId or undefined for a new one) with the prompt in its chat box, in the group right
+ * of the dashboard. claude-vscode.editor.open(sessionId, prompt, viewColumn, group, fullEditor) is used (Claude Code
+ * 2.1.330); primaryEditor.open (no column) is the fallback. An already-open chat stays where it is. */
+async function openClaudeChat(sid, prompt) {
+  const col = besideColumn();
+  if (col !== undefined) {
+    try { await vscode.commands.executeCommand("claude-vscode.editor.open", sid, prompt, col, undefined, true); return; }
+    catch (e) { log("Chat beside the dashboard failed, default place used: " + ((e && e.message) || e)); }
+  }
+  await vscode.commands.executeCommand("claude-vscode.primaryEditor.open", sid, prompt);
 }
 async function spark(given, doneMsg, quiet) {
   const prompt = typeof given === "string" && given ? given : sparkPrompt();
@@ -388,7 +408,7 @@ async function spark(given, doneMsg, quiet) {
   // asks the user in an input box, and cannot rename a tab until its session has started (after the first message).
   if (vscode.extensions.getExtension(CLAUDE_EXT)) {
     try {
-      await vscode.commands.executeCommand("claude-vscode.primaryEditor.open", undefined, prompt);
+      await openClaudeChat(undefined, prompt);
       if (!quiet) vscode.window.showInformationMessage(done); return "command";
     } catch (e) { /* next way */ }
     try {
@@ -404,6 +424,48 @@ async function spark(given, doneMsg, quiet) {
   if (!quiet) vscode.window.showInformationMessage(side ? "Spark: the starter prompt is on the clipboard. Paste it into the Claude Code chat to start."
     : "Spark: the starter prompt is on the clipboard. Install or open Claude Code, then paste it into a new chat to start.");
   return "clipboard";
+}
+
+// ---- Condense / Restart a member's chat. Safe only when core says so (idle, nothing waiting, job not running).
+// Order: 1. choose Condense or Restart, 2. CONDENSE <time>.json request file for the leader, 3. the BRAIN SAVE prompt on
+// the clipboard and the member's chat in front (Claude Code fills the chat box only when the chat is not open yet),
+// 4. a notice with the next steps. The extension cannot type /compact itself: the user does that after "BRAIN SAVED".
+function condensePrompt(name, mode) {
+  let t = String(vscode.workspace.getConfiguration("rebelBotSwarm").get("condensePrompt", "") || "").trim();
+  if (!t) t = (schema()["rebelBotSwarm.condensePrompt"] || {}).default || "";
+  const r = mode === "restart";
+  return t.split("{member}").join(name).split("{actionPast}").join(r ? "restarted" : "condensed")
+    .split("{actionNext}").join(r ? "close this chat and start a new one" : "type /compact")
+    .split("{action}").join(r ? "restart" : "condense").slice(0, 6000);
+}
+async function condense(id) {
+  const m = lastCondense.get(id), reply = r => { try { if (panel) panel.webview.postMessage({ type: "condenseResult", id, ...r }); } catch (e) { /* page gone */ } return r; };
+  if (!m) return reply({ ok: false, msg: "Condense: this member is not on the dashboard now." });
+  const name = m.display || m.name;
+  if (!m.canCondense) { const msg = `Condense ${name}: ${m.condenseWhy || "not safe now."}`; vscode.window.showWarningMessage(msg); return reply({ ok: false, msg }); }
+  const k = m.ctx ? ` (context ${Math.round(m.ctx / 1000)}k)` : "";
+  const pick = await vscode.window.showQuickPick([
+    { label: "$(fold) Condense", description: "/compact: keep this chat, make it small", mode: "compact" },
+    { label: "$(refresh) Restart", description: "close this chat, start a new one", mode: "restart" }],
+    { title: `Rebel Bot Swarm: condense or restart ${name}${k}`, placeHolder: `${name} writes its lessons to its brain first` });
+  if (!pick) return reply({ ok: false, msg: "Condense: cancelled." });
+  const req = core.condenseRequest(m, pick.mode, cfg().requestsFolder);
+  if (!req.ok) log(`Condense: request file not saved: ${req.msg}`); else log(`Condense request file saved: ${req.file}`);
+  const prompt = condensePrompt(name, pick.mode);
+  await vscode.env.clipboard.writeText(prompt);
+  try { if (vscode.extensions.getExtension(CLAUDE_EXT)) await openClaudeChat(m.sid, prompt); }
+  catch (e) { log("Condense: chat open failed: " + ((e && e.message) || e)); }
+  const next = pick.mode === "restart" ? "close the chat and click 'New chat' here" : "type /compact in the chat";
+  const msg = `${name}: the BRAIN SAVE prompt is on the clipboard. 1. In ${name}'s chat, paste it (Ctrl+V) if the box is empty, and send it. 2. When it replies BRAIN SAVED, ${next}.`;
+  log(msg);
+  const out = reply({ ok: true, msg, file: req.ok ? req.file : "" });
+  if (pick.mode !== "restart") { vscode.window.showInformationMessage(msg); return out; }
+  vscode.window.showInformationMessage(msg, "New chat").then(async btn => {
+    if (btn !== "New chat") return;
+    try { await openClaudeChat(undefined, `You are ${name}. This is a new chat after a restart. Read your brain (memory files) and the team board first, then tell me in one line that you are ready.`); }
+    catch (e) { log("Condense: new chat failed: " + ((e && e.message) || e)); }
+  });
+  return out;
 }
 
 const TIP_KEY = "rebelBotSwarm.storageTipDismissed";
@@ -460,6 +522,7 @@ function show() {
     else if (m.type === "attachDigest") attachFile(String(m.id || ""));
     else if (m.type === "saveTeam") saveTeam();
     else if (m.type === "spark") spark();
+    else if (m.type === "condense") condense(String(m.id || "")).catch(e => log("Condense ERROR (outer): " + ((e && e.stack) || e)));
     else if (m.type === "decide") decide(m.k, String(m.item || "")).catch(e => log("Decide ERROR (outer): " + ((e && e.stack) || e)));
     else if (m.type === "dismissWelcome") { if (gstate) { gstate.update(WELCOME_KEY, true); gstate.update(START_KEY, false); } }
     else if (m.type === "startOpen") { if (gstate) gstate.update(START_KEY, !!m.open); }
