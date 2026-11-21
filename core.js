@@ -301,6 +301,40 @@ function helperFiles(dirs) {
   }
   return out.sort((a, b) => b.st.mtimeMs - a.st.mtimeMs).slice(0, ACT_FILES);
 }
+/** 0.5.3: helpers started from a session in ANY other project folder (~/.claude/projects/*), so a card lights
+ *  wherever the coordinator's session was started. Stat only; a file is kept (and later read) only when it was
+ *  written inside the HELPER_SECS window. skip = the project folders helperFiles already reads. */
+function runningElsewhere(skip) {
+  const out = [], cutoff = Date.now() - HELPER_SECS * 1000;
+  let names = [];
+  try { names = fs.readdirSync(PROJECTS); } catch (e) { return out; }
+  for (const n of names) {
+    const dir = path.join(PROJECTS, n);
+    if (skip.has(dir)) continue;
+    let sess = [];
+    try { sess = fs.readdirSync(dir); } catch (e) { continue; }
+    for (const s of sess) {
+      if (s.endsWith(".jsonl")) continue;
+      const sub = path.join(dir, s, "subagents");
+      let files = [];
+      try { files = fs.readdirSync(sub); } catch (e) { continue; }
+      for (const fn of files) {
+        if (!fn.endsWith(".jsonl")) continue;
+        const p = path.join(sub, fn);
+        try { const st = fs.statSync(p); if (st.isFile() && st.mtimeMs >= cutoff) out.push({ p, st, parent: s, elsewhere: true }); } catch (e) { continue; }
+      }
+    }
+  }
+  return out;
+}
+/** The card for a helper's agentType when no agent file matched: the card id equal to the type ("gold-2"), else the
+ *  type's first part ("babu-frik" -> "babu", "gold-leader" -> "gold"). */
+function cardForType(members, type) {
+  const t = String(type || "").trim().toLowerCase();
+  if (!t) return null;
+  const head = t.split(/[-_\s]+/)[0];
+  return members.find(m => memberId(m.name) === t) || (head ? members.find(m => firstWord(m.name) === head) : null) || null;
+}
 const firstWord = n => (String(n).split(" - ")[0].split(" (")[0].trim().split(/\s+/)[0] || "").toLowerCase();
 function addAgentCards(members, mk, idx, wantedOf) {
   for (const a of idx) {
@@ -398,26 +432,30 @@ function buildState(cfg, picUri) {
   // helpers (subagents): who works now, their steps, the brief from the coordinator and the hand-back
   const working = [], steps = [], helperIds = {}, busyParents = new Set();
   const tokHelpers = [];   // 0.5.1 token use: each helper transcript and the card it belongs to ("" = no card)
-  for (const { p, st, parent } of helperFiles(dirs)) {
+  for (const { p, st, parent, elsewhere } of [...helperFiles(dirs), ...runningElsewhere(inScope)]) {
     const h = helperInfo(p, st);
     if (!h) continue;
     const a = h.agentType && !h.builtIn ? idx.find(x => x.keys.includes(slug(h.agentType))) : null;
-    const m = (a && members.find(x => matchAgent(x.name, idx, wantedOf(x.name)) === a)) || (h.you && byName(h.you)) || null;
+    const m = (a && members.find(x => matchAgent(x.name, idx, wantedOf(x.name)) === a))
+      || (h.agentType && !h.builtIn ? cardForType(members, h.agentType) : null) || (h.you && byName(h.you)) || null;
     const who = m ? (m.display || m.name) : (h.you || (a ? a.name : h.agentType ? "helper (" + h.agentType + ")" : "helper"));
     const pm = members.find(x => x.sid === parent) || null, boss = pm ? (pm.display || pm.name) : (titleNames[parent] || "coordinator");
     const hide = (m && m.private) || isPriv(who) || isPriv(h.task) || isPriv(h.you) || isPriv(h.agentType);
     const age = Date.now() - st.mtimeMs, running = !h.finished && age < (h.hasMeta ? RUN_SECS : HELPER_SECS) * 1000;
     const last = h.steps[h.steps.length - 1];
     helperIds[path.basename(p, ".jsonl").replace(/^agent-/, "")] = { who, id: m ? m.id : "", hide };
-    tokHelpers.push({ p, id: m ? m.id : "" });
+    if (!elsewhere) tokHelpers.push({ p, id: m ? m.id : "" });
     if (running) {
       busyParents.add(parent);
       working.push({ who, id: m ? m.id : "", task: hide ? "(private)" : h.task, step: hide ? "" : (last ? last.text : "starting"),
                      time: last ? fmt(new Date(last.ts)) : fmt(new Date(st.mtimeMs)), ts: last ? last.ts : new Date(st.mtimeMs).toISOString() });
       if (m && (m.status === "ready" || m.status === "idle")) {
-        m.status = "working"; m.since = fmt(new Date(st.mtimeMs)); m.extra = hide ? "helper running" : (last ? last.text : "helper running");
+        // 0.5.3: the task from .meta.json (description) first, then the latest step
+        m.status = "working"; m.since = fmt(new Date(st.mtimeMs));
+        m.extra = hide ? "helper running" : (h.task ? oneLine(h.task + (last ? " · " + last.text : ""), LINE_MAX) : (last ? last.text : "helper running"));
       }
     }
+    if (elsewhere) continue;   // 0.5.3: a helper from another project lights its card and the working list only
     if (!hide) for (const s of h.steps) steps.push({ ts: s.ts, time: fmt(new Date(s.ts)), who, text: s.text });
     if (h.briefTs) msgs.push({ ts: h.briefTs, from: boss, to: who, text: hide ? "(private)" : (h.task ? h.task + ": " : "") + h.brief, kind: "brief", fromId: pm ? pm.id : "", toId: m ? m.id : "" });
     if (h.handback) msgs.push({ ts: h.handback.ts, from: who, to: boss, text: hide ? "(private)" : h.handback.text, kind: "report", fromId: m ? m.id : "", toId: pm ? pm.id : "" });

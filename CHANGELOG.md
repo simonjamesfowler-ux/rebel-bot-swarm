@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.3
+- **Helpers light their card wherever they were started.** A helper (subagent) started from a session in any
+  project folder now lights its member's card, not only one started in this window's folders. Other folders are
+  only checked for files written in the last 2 minutes, so the dashboard stays quick.
+- **Helpers are named from Claude Code's own record.** The card is found from the helper's agent type (for example
+  `ada-lovelace` lights the card Ada), so the brief no longer has to start "You are ...". That line is still used
+  when there is no record.
+- **The card says what the helper is doing.** A working card's tooltip shows the helper's task, then its latest step.
+
 ## 0.5.2
 - **OPEN button.** The leader button reads OPEN and the name on the leader's card (for example OPEN COORDINATOR)
   and follows a rename at once. It always shows the full name: when the row is short of room the other buttons

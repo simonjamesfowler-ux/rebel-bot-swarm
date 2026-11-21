@@ -2,7 +2,7 @@
   "name": "rebel-bot-swarm",
   "displayName": "Rebel Bot Swarm",
   "description": "A dashboard for your Claude Code team: open your team leader in a new chat, status, original avatars, who is working on what, live progress, comms lines, member brains, Save team / Restore team. Local only.",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "publisher": "simonjamesfowler-ux",
   "license": "MIT",
   "repository": {
