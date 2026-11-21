@@ -1,5 +1,54 @@
 # Changelog
 
+## 0.4.1
+- **Decide button fixed (request file first, toast, output channel).** A click now writes the `DECIDE <time>.json`
+  request file FIRST, then tries to open the leader's chat. Every click shows one VS Code notice: `Decide sent to
+  <leader> ...` or the exact error. Errors and each Decide step go to the new output channel **Rebel Bot Swarm**.
+  The page shows "sending..." and, if the extension gives no answer in 4 seconds, tells you to reload the window.
+- Board items are compared without markdown marks, extra spaces, CR or a trailing full stop.
+- If the extension files change on disk after VS Code loaded them (a new install of the same version), the panel
+  tells you to run **Developer: Reload Window**.
+
+## 0.4.0
+- **Compact summary row:** the summary tiles are one 30 px row that does not wrap (on a narrow panel the row scrolls).
+  The shared-slot tile shows a short text (for example "Free · 21 Nov 10:15"); the full text is in its tooltip. Click a
+  tile (or press Enter on it) to go to its section. The Network view now fills the height that is left.
+- **Waiting for you** counts only the open top-level bullets in the board's "Waiting for" section (sub-lines, struck
+  `~~…~~`, `[x]` and DONE items are not counted). Each item has a **Decide ▸** button (left of the item, in one
+  column): it puts `DECIDE: <item>` in your leader's OWN chat (new setting `rebelBotSwarm.leaderSessionId`, else the
+  newest chat whose tab title starts with the leader name) and always writes a `DECIDE <time>.json` request file. If no
+  leader chat is found, it opens a new chat with a decision prompt (new setting `rebelBotSwarm.decidePrompt`).
+- Header: Spark, Save team, Restore team and Add team member are one compact button group on the header row.
+- New setting `rebelBotSwarm.showUnnamedSessions` (default off): sessions that still have their default title (the
+  folder name) and are not on the board get no card.
+- **Spark** (big button at the top of the dashboard, command **Rebel Bot Swarm: Spark a new chat**): opens a new
+  Claude Code chat with a starter prompt in the chat box (you press Enter to send it). The default prompt makes the
+  chat a front desk that hands the task to a matching subagent or writes a request file for your coordinator, then
+  tells you that you can close the tab. New setting `rebelBotSwarm.sparkPrompt`. If the Claude Code commands do not
+  work, the prompt goes on the clipboard and the Claude Code side bar opens.
+- **Open and close:** the **Swarm** status-bar button now opens the dashboard, or closes it when it is in front. New
+  command **Rebel Bot Swarm: Toggle dashboard** (keys Ctrl+Alt+S on Windows and Linux). New **Rebel Bot Swarm** icon in the
+  activity bar: Open dashboard, Spark and Save team buttons and a 3-line status (working, waiting for you, idle or ready).
+- **Team leader:** new settings `rebelBotSwarm.leaderName` (default "Coordinator") and `rebelBotSwarm.leaderRole`, and
+  command **Rebel Bot Swarm: Set leader name**. Spark opens the chat as the leader ("Hi, I'm (leader name). What would
+  you like to do?"); a custom `sparkPrompt` can use `{leader}` and `{leaderRole}`. The Spark button shows the name.
+  The leader card has a violet border, a left bar and a LEAD badge (a violet ring in Network view), also when idle.
+- **New users:** a VS Code walkthrough "Start here: Rebel Bot Swarm" (Help > Get Started) and a small **Start here**
+  drop-down in the dashboard header with the same four steps and the box for the leader name: open on first run,
+  closed after "Got it", open again from the header at any time (the open or closed state is kept). README: "Start
+  here" at the top.
+
+## 0.3.1 (not released; part of 0.4.0)
+- **Save team...** (button at the top of the panel, command **Rebel Bot Swarm: Save team**): one `.zip` file where
+  you choose, with your members file, pictures, panel brains, `rebelBotSwarm.*` settings and a manifest. Optional
+  groups, all off by default: Claude Code member brains, agent files, skills (not `synced`) and project memory (with
+  a privacy warning). Private members' brains are left out unless you tick "Include private members' brains".
+  Never saved: Claude Code settings, credentials, `.env` files, keys, tokens, transcripts.
+- **Restore team...** (button and command): from a Save team `.zip` file or folder. Checks file names (no path
+  tricks), file types (pictures by their first bytes, text files) and sizes; shows what is new and what it replaces;
+  asks first; keeps a dated copy of each replaced file and setting in VS Code's storage folder (`restore backups`).
+- A one-time tip when your team is in VS Code's storage folder (it can be deleted when you uninstall).
+- README: new section "Keep your team safe".
 ## 0.3.0
 - **Dashboard look:** a strip of summary tiles (working, waiting for you, idle or ready, jobs done today, messages
   today, shared slot), panels with headers, colours from your VS Code theme (light, dark and high contrast), and a

@@ -2,6 +2,21 @@
 
 See your Claude Code sessions and helpers as one team, on a dashboard in a VS Code panel.
 
+## Start here
+
+New to Rebel Bot Swarm? Do these four steps (also in VS Code: **Help > Get Started > Start here: Rebel Bot Swarm**,
+and on the dashboard until you hide it):
+
+1. **Open and close the dashboard:** click **Swarm** in the status bar (bottom left) to open it, and again to close
+   it. Or use the **Rebel Bot Swarm** icon in the activity bar (left edge: buttons and a 3-line status), the keys
+   **Ctrl+Alt+S** (Windows, Linux), or the command **Rebel Bot Swarm: Toggle dashboard**.
+2. **Name your leader, then press Spark:** type your team leader's name in **Start here** (default "Coordinator").
+   The big **Spark** button (it shows the leader's name) opens a new Claude Code chat with a starter prompt in the
+   chat box. Press Enter, then say what you want to do. The chat hands the task to the right member (a subagent from
+   `~/.claude/agents`) or writes a request file for your coordinator.
+3. **Close chat tabs when the job is handed over:** the dashboard keeps watching your team.
+4. **Save team** to keep your pictures, names and settings safe (see "Keep your team safe").
+
 ![Rebel Bot Swarm panel](https://raw.githubusercontent.com/simonjamesfowler-ux/rebel-bot-swarm/main/docs/screenshot.png)
 
 > **Unofficial add-on.** Rebel Bot Swarm is not made by, endorsed by or affiliated with Anthropic. It depends on
@@ -51,12 +66,50 @@ Teacher, Personal). Other members get a crew look chosen from a hash of the name
 - It reads `~/.claude/sessions/*.json`, the transcript files of your projects (only the new bytes at each refresh),
   the helper transcripts `<project>/<session>/subagents/agent-*.jsonl` of the last 24 hours (first and last bytes
   only), your board file, `~/.claude/agents/*.md` and the member's brain file. It never writes to them.
-- It reads only while its panel is open and visible. The status-bar button only opens the panel.
+- It reads only while its panel is open and visible. The status-bar button opens or closes the panel. The activity-bar view reads the three counts only while it is visible.
 - It writes only when you click a button in the panel: the names and avatars you choose (a members file, with a
   backup before each change), small request files (`NEW MEMBER <time>.json`, `EDIT MEMBER <time>.json`,
   `DIGEST <time>.json`, plus a copy of a file you attach), a picture you upload (copied into the avatars folder,
   never over a file), and an empty brain file when you ask for one. These go to VS Code's storage folder for this
   extension, or to the files and folders you set.
+- **Save team** writes one `.zip` file where you choose. **Restore team** writes only after you say yes.
+
+## Spark
+
+**Spark** (dashboard button, command **Rebel Bot Swarm: Spark a new chat**) opens a new Claude Code chat with the
+starter prompt from the setting `rebelBotSwarm.sparkPrompt` in the chat box. It is not sent until you press Enter.
+The default prompt makes the chat your team leader: it says "Hi, I'm (leader name). What would you like to do?", hands
+the task to a matching subagent or writes one `REQUEST <time>.json` file in the requests folder, and tells you when
+you can close the tab. Edit the setting to change it (`{leader}`, `{leaderRole}`, `{agentsFolder}`,
+`{requestsFolder}` and `{board}` are filled in for you).
+
+**Your team leader:** set the name in **Start here** on the dashboard, with the command **Rebel Bot Swarm: Set leader
+name**, or in the settings `rebelBotSwarm.leaderName` (default "Coordinator", for example "Ada") and
+`rebelBotSwarm.leaderRole` (default "the team leader and coordinator"). The **Spark** button shows the name. The
+leader card has a violet border and a **LEAD** badge (a violet ring in Network view). It is the card with the
+leader's name (board row or edit-panel name); if there is none, the board row whose job says coordinator or leader;
+if there is none, a new ready card. The new chat tab keeps Claude Code's own name: Claude Code can rename a tab only
+after its first message, and it asks you for the name (command **Claude Code: Rename Session Tab**).
+Spark uses Claude Code commands that are not a public interface. If they do not work, the prompt goes on the
+clipboard and the Claude Code side bar opens: paste the prompt there.
+
+## Keep your team safe
+
+By default your members file, pictures and panel brains are in VS Code's storage folder for this extension. VS Code
+can delete that folder when you uninstall the extension. To keep them safe:
+
+- Click **Save team...** at the top of the panel (or run **Rebel Bot Swarm: Save team**). It writes one `.zip` file
+  where you choose: `members.json`, your pictures, the panel brains, your `rebelBotSwarm.*` settings and a
+  `manifest.json` (version, date, file list). Private members' brains are left out.
+- Extra groups are off by default; tick them to add them: Claude Code member brains (`~/.claude/agent-memory/*`),
+  agent files (`~/.claude/agents/*.md`), skills (`~/.claude/skills/*`, not the `synced` folder) and Claude Code
+  project memory (`~/.claude/projects/*/memory`). Project memory can hold private notes: keep that file private.
+- Never saved: Claude Code's `settings.json`, credentials, `.env` files, keys, tokens and transcripts.
+- **Restore team...** (or **Rebel Bot Swarm: Restore team**) reads a Save team `.zip` file or folder. It checks every
+  file name and type (pictures by their first bytes, size limits), shows what it will add or replace, and asks
+  before it writes. It keeps a dated copy of each file or setting it replaces.
+- Or set `rebelBotSwarm.avatarsFolder`, `rebelBotSwarm.membersFile` and `rebelBotSwarm.brainsFolder` to a folder of
+  your own (for example one that you back up).
 
 ## Install
 
@@ -83,6 +136,12 @@ Works on Windows, macOS and Linux with VS Code 1.80 or later and Claude Code.
 | `rebelBotSwarm.requestsFolder` | empty | Folder for the request files (Add team member, task, role instructions). Empty = VS Code's storage folder for this extension. |
 | `rebelBotSwarm.membersFile` | empty | File for the names and avatars you choose in the edit panel. Empty = `members.json` in VS Code's storage folder. |
 | `rebelBotSwarm.agentCards` | `false` | Also show a ready card for each agent file in `~/.claude/agents/` that has no card yet. |
+| `rebelBotSwarm.leaderName` | `Coordinator` | Your team leader's name: Spark opens the chat as this leader; the leader card gets a LEAD badge. |
+| `rebelBotSwarm.leaderRole` | `the team leader and coordinator` | The leader's role in the Spark prompt. |
+| `rebelBotSwarm.sparkPrompt` | (default text) | The Spark starter prompt; `{leader}` and `{leaderRole}` are filled in. |
+| `rebelBotSwarm.leaderSessionId` | (empty) | Your leader's own chat (its session id). **Decide ▸** puts `DECIDE: <item>` in this chat and writes a `DECIDE <time>.json` request file. Empty = the newest chat whose tab title starts with the leader name. |
+| `rebelBotSwarm.decidePrompt` | (default text) | The prompt that **Decide ▸** puts in a new chat when no leader chat is found; `{leader}`, `{leaderRole}`, `{item}`, `{board}`, `{requestsFolder}` are filled in. |
+| `rebelBotSwarm.showUnnamedSessions` | `false` | Show a card for a session that still has its default title (the folder name) and is not on the board. |
 
 Command **Rebel Bot Swarm: Open requests folder** opens the folder where the request files are saved.
 

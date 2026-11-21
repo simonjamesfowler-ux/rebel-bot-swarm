@@ -74,7 +74,8 @@ function board(file) {
   for (const c of table(section(t => t.includes("slot")))) if (c.length > 1 && c[0].toLowerCase().startsWith("holder")) holder = c[1];
   if (/^\(?(free|none|empty|-)?\)?$/i.test(holder.trim())) holder = "";
   const waiting = section(t => t.startsWith("waiting")).split(/\r?\n/).filter(l => l.startsWith("- ")).map(l => l.slice(2).trim())
-    .filter(w => !/^\(?nothing\)?$/i.test(w));
+    .filter(w => w && !/^\(?nothing\)?$/i.test(w) && !/^~~/.test(w) && !/^\[x\]/i.test(w) && !/^(done|closed)\b/i.test(w));
+  // only top-level "- " bullets count: indented sub-lines, struck (~~), ticked ([x]) and DONE items are not open
   // "## Log": "- 21 Nov 14:05 Name: text" (the time is optional); newest lines last
   const log = [];
   for (const l of section(t => t === "log" || t.startsWith("log ")).split(/\r?\n/)) {
@@ -335,11 +336,25 @@ function buildState(cfg, picUri) {
     members.push(member(key, job, teamLive[match], match, b));
     if (match) used.add(match);
   }
-  for (const [sid, d] of Object.entries(teamLive)) if (!used.has(sid)) members.push(member(d.name || sid.slice(0, 8), b.found ? "(not on the board)" : "", d, sid, b));
+  // a session that still has its default title (the folder slug, e.g. "my-project" or "my-project-e4") and is not on
+  // the board is hidden unless showUnnamedSessions is on
+  const slugs = new Set([...folders, ...Object.values(teamLive).map(d => d.cwd || "")].map(p => path.basename(String(p || "")).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")).filter(Boolean));
+  const unnamed = d => { const n = String(d.name || "").trim().toLowerCase(); if (!n) return true; const base = n.replace(/-[0-9a-z]{1,8}$/, ""); return slugs.has(n) || slugs.has(base); };
+  for (const [sid, d] of Object.entries(teamLive)) if (!used.has(sid) && (cfg.showUnnamedSessions || !unnamed(d))) members.push(member(d.name || sid.slice(0, 8), b.found ? "(not on the board)" : "", d, sid, b));
   const settings = loadSettings(cfg.membersFile), idx = agentIndex(cfg.agentsDir === undefined ? AGENTS : cfg.agentsDir);
   const wantedOf = n => { const s = settings[memberId(n)]; return s && typeof s.agent === "string" ? s.agent : ""; };
   if (cfg.agentCards) addAgentCards(members, (n, j) => member(n, j, null, null, b), idx, wantedOf);
-  for (const m of members) if (m.status === "closed") m.status = "ready";
+  // the team leader (setting leaderName): the card with that name or edit-panel name, else the row whose job says
+  // coordinator or leader, else a new ready card
+  const lname = String(cfg.leaderName || "").trim().slice(0, NAME_MAX), lid = lname ? memberId(lname) : "";
+  let leader = null;
+  if (lid) {
+    const shown = m => { const s = settings[memberId(m.name)]; return s && typeof s.name === "string" ? s.name.trim().toLowerCase() : ""; };
+    leader = members.find(m => memberId(m.name) === lid || shown(m) === lname.toLowerCase())
+      || members.find(m => /coordinat|\bleader\b|\blead\b/i.test(m.job || "")) || null;
+    if (!leader) { leader = member(lname, String(cfg.leaderRole || "the team leader and coordinator").slice(0, JOB_MAX), null, null, b); members.unshift(leader); }
+  }
+  for (const m of members) { m.leader = m === leader; if (m.status === "closed") m.status = "ready"; }
   const avDir = expandHome(cfg.avatarsFolder), pics = ownPictures(avDir), files = picFiles(avDir), choices = [];
   if (picUri) for (const f of Object.keys(files)) choices.push({ file: f, url: picUri(files[f].p) + "?v=" + files[f].v });
   lastMembers.clear();
@@ -411,7 +426,7 @@ function buildState(cfg, picUri) {
   const now = new Date();
   return { updated: `${p2(now.getHours())}:${p2(now.getMinutes())}:${p2(now.getSeconds())}`, now: now.getTime(), holder: b.holder, waiting: b.waiting,
            board: b.found, members, feed: out, links: links.slice(0, 80), working: working.sort(desc), steps: steps.sort(desc).slice(0, 40), log,
-           pics: choices, styles: STYLES, avatarsSet: !!avDir };
+           pics: choices, styles: STYLES, avatarsSet: !!avDir, leaderName: lname };
 }
 
 // ---- edit panel: name and avatar (members.json), task and role instructions (a request file for the coordinator)
@@ -670,5 +685,72 @@ function newMemberRequest(data, requestsFolder) {
   return { ok: true, msg: "Request saved for your coordinator" };
 }
 
+/** Decide: one request file for the leader, who watches the requests folder and asks the question in its own chat. */
+function decideRequest(item, requestsFolder) {
+  const dir = expandHome(requestsFolder), it = String(item || "").replace(/\s+/g, " ").trim().slice(0, 1500);
+  if (!dir || !it) return { ok: false, msg: "Not saved: no requests folder or item." };
+  const t = stamp(), body = JSON.stringify({ type: "decide", item: it, time: t.iso, from: "Decide" }, null, 2);
+  try { fs.mkdirSync(dir, { recursive: true }); } catch (e) { return { ok: false, msg: "Not saved: " + ((e && e.message) || e.code || "folder error") }; }
+  // Names have 1-second steps: a 2nd click in the same second gets " 2", " 3"... (never overwrites a file).
+  for (let n = 1; n <= 20; n++) {
+    const file = `DECIDE ${t.file}${n > 1 ? " " + n : ""}.json`;
+    try { fs.writeFileSync(path.join(dir, file), body, { encoding: "utf8", flag: "wx" }); return { ok: true, file }; }
+    catch (e) { if (!e || e.code !== "EEXIST") return { ok: false, msg: "Not saved: " + ((e && e.message) || e.code || "write error") }; }
+  }
+  return { ok: false, msg: "Not saved: 20 requests in one second." };
+}
+
+/** Text for comparing board items: no CR, markdown marks, list bullets or extra spaces; NFC; no trailing full stop. */
+function normItem(s) {
+  return String(s == null ? "" : s).normalize("NFC").replace(/\r/g, "").replace(/^\s*[-*+]\s+/, "").replace(/[*_`]/g, "")
+    .replace(/\s+/g, " ").trim().replace(/[.\s]+$/, "").toLowerCase();
+}
+/** Index of the clicked item in the board's open items now: the same index first, else the same text anywhere; -1 = gone. */
+function findWaiting(waiting, k, item) {
+  const list = Array.isArray(waiting) ? waiting : [], want = normItem(item), i = Number(k);
+  if (!want) return -1;
+  if (Number.isInteger(i) && i >= 0 && i < list.length && normItem(list[i]) === want) return i;
+  return list.findIndex(w => normItem(w) === want);
+}
+
+/** Title in the last 2 MB of a transcript (Claude Code writes customTitle again often), "" if none. */
+function tailTitle(file) {
+  const key = Buffer.from('"customTitle":"');
+  let fd;
+  try {
+    fd = fs.openSync(file, "r");
+    const size = fs.fstatSync(fd).size, len = Math.min(size, 2 << 20), buf = Buffer.alloc(len);
+    fs.readSync(fd, buf, 0, len, size - len);
+    const i = buf.lastIndexOf(key);
+    if (i >= 0) { const j = buf.indexOf(0x22, i + key.length); if (j > 0) return buf.slice(i + key.length, j).toString("utf8"); }
+  } catch (e) { /* no title */ } finally { if (fd !== undefined) fs.closeSync(fd); }
+  return "";
+}
+
+/** The leader's chat: the newest transcript in <home>/.claude/projects/* whose tab title starts with the leader name.
+ * Looks at the 300 newest transcripts only. Returns { id, title, file } or null. */
+function findLeaderSession(leader, projectsDir) {
+  const want = String(leader || "").trim().toLowerCase();
+  if (!want) return null;
+  const root = projectsDir || PROJECTS, all = [];
+  let dirs = [];
+  try { dirs = fs.readdirSync(root); } catch (e) { return null; }
+  for (const d of dirs) {
+    let names = [];
+    try { names = fs.readdirSync(path.join(root, d)); } catch (e) { continue; }
+    for (const fn of names) {
+      if (!/^[0-9a-f-]{36}\.jsonl$/i.test(fn)) continue;
+      const file = path.join(root, d, fn);
+      try { all.push({ file, id: fn.slice(0, 36), t: fs.statSync(file).mtimeMs }); } catch (e) { /* gone */ }
+    }
+  }
+  all.sort((a, b) => b.t - a.t);
+  for (const f of all.slice(0, 300)) {
+    const title = tailTitle(f.file);
+    if (title && title.toLowerCase().startsWith(want)) return { id: f.id, title, file: f.file };
+  }
+  return null;
+}
+
 module.exports = { buildState, newMemberRequest, editMember, roleInfo, brainInfo, brainFor, createBrain, savePicture, digestRequest,
-  matchAgent, agentIndex, expandHome, _resetLimit: () => { lastRequest = 0; } };
+  matchAgent, agentIndex, expandHome, decideRequest, findWaiting, normItem, findLeaderSession, _resetLimit: () => { lastRequest = 0; } };

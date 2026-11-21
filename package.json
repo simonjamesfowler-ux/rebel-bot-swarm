@@ -1,8 +1,8 @@
 {
   "name": "rebel-bot-swarm",
   "displayName": "Rebel Bot Swarm",
-  "description": "A dashboard for your Claude Code team: status, original avatars, who is working on what, live progress, comms lines between members, member brains and a card edit panel. Local only.",
-  "version": "0.3.0",
+  "description": "A dashboard for your Claude Code team: Spark a new chat, status, original avatars, who is working on what, live progress, comms lines, member brains, Save team / Restore team. Local only.",
+  "version": "0.4.1",
   "publisher": "simonjamesfowler-ux",
   "license": "MIT",
   "repository": {
@@ -43,8 +43,28 @@
         "title": "Rebel Bot Swarm: Show"
       },
       {
+        "command": "rebelBotSwarm.toggle",
+        "title": "Rebel Bot Swarm: Toggle dashboard"
+      },
+      {
+        "command": "rebelBotSwarm.spark",
+        "title": "Rebel Bot Swarm: Spark a new chat"
+      },
+      {
         "command": "rebelBotSwarm.openRequests",
         "title": "Rebel Bot Swarm: Open requests folder"
+      },
+      {
+        "command": "rebelBotSwarm.saveTeam",
+        "title": "Rebel Bot Swarm: Save team"
+      },
+      {
+        "command": "rebelBotSwarm.restoreTeam",
+        "title": "Rebel Bot Swarm: Restore team"
+      },
+      {
+        "command": "rebelBotSwarm.setLeader",
+        "title": "Rebel Bot Swarm: Set leader name"
       }
     ],
     "configuration": {
@@ -98,6 +118,17 @@
           "default": "",
           "markdownDescription": "File that keeps the names and avatars you choose in the edit panel (JSON; a backup is made before each change). Empty = `members.json` in VS Code's storage folder for this extension. `~` = your home folder."
         },
+        "rebelBotSwarm.showUnnamedSessions": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Show a card for a live session that still has its default title (the project-folder name, for example `my-project` or `my-project-e4`) and is not on the board. Off = such sessions are hidden."
+        },
+        "rebelBotSwarm.decidePrompt": {
+          "type": "string",
+          "editPresentation": "multilineText",
+          "default": "You are {leader}, {leaderRole}. I want to decide this open item from the team board ({board}): '{item}'.\nRead the board file (and any file the item names) for context. Explain the choice in 3-5 short lines, then ask me the decision as ONE multiple-choice question (2-4 options, the recommended option first).\nRecord my answer: if you are the board's owner or coordinator, append one dated line to the board's log; else write ONE file \"DECISION <yyyy-mm-dd HHMMSS>.json\" in {requestsFolder} with {\"type\": \"decision\", \"item\": \"<the item>\", \"answer\": \"<my answer>\", \"from\": \"Decide\"}.\nKeep this chat short. At the end, tell me in one line that I can close this tab.",
+          "markdownDescription": "The prompt that **Decide ▸** (on each *Waiting for you* item) puts in a new Claude Code chat. `{leader}`, `{leaderRole}`, `{item}` = the item text, `{board}` = the board file, `{requestsFolder}` = the requests folder. Empty = the default text."
+        },
         "rebelBotSwarm.agentCards": {
           "type": "boolean",
           "default": false,
@@ -107,8 +138,114 @@
           "type": "string",
           "default": "",
           "markdownDescription": "Folder for member brain files (`<member>.md`) shown in the edit panel, when Claude Code's own subagent memory (`memory:` in the agent file) is not used. Empty = VS Code's storage folder for this extension. `~` = your home folder."
+        },
+        "rebelBotSwarm.leaderSessionId": {
+          "type": "string",
+          "default": "",
+          "pattern": "^([0-9a-fA-F-]{36})?$",
+          "markdownDescription": "The session id of your team leader's own Claude Code chat (the file name of its transcript in `~/.claude/projects/<project>/`, without `.jsonl`). **Decide ▸** puts the question in this chat. Empty = the newest chat whose tab title starts with the leader name. If no chat is found, Decide opens a new chat. Decide always also writes a `DECIDE <time>.json` request file in the requests folder."
+        },
+        "rebelBotSwarm.leaderName": {
+          "type": "string",
+          "default": "Coordinator",
+          "maxLength": 40,
+          "markdownDescription": "The name of your team leader. **Spark** opens a new chat as this leader (it says \"Hi, I am <name>\"), the Spark button shows the name, and the dashboard shows the leader as a card (the board row or member with this name, else the row whose job says coordinator). Example: `Ada`."
+        },
+        "rebelBotSwarm.leaderRole": {
+          "type": "string",
+          "default": "the team leader and coordinator",
+          "maxLength": 120,
+          "markdownDescription": "The role of your team leader, used in the Spark starter prompt (\"You are <name>, <role> of my Rebel Bot Swarm team\")."
+        },
+        "rebelBotSwarm.sparkPrompt": {
+          "type": "string",
+          "editPresentation": "multilineText",
+          "default": "You are {leader}, {leaderRole} of my Rebel Bot Swarm team of Claude Code members. First say only: \"Hi, I'm {leader}. What would you like to do?\" and wait for my answer.\nThen route the task, and do not do the work yourself:\n1. If an agent file in {agentsFolder} fits the task, hand the task to that member with the Agent tool (subagent_type = the agent's name) and give it a short, clear brief.\n2. If no member fits, or the task is for the coordinator, write ONE request file \"REQUEST <yyyy-mm-dd HHMMSS>.json\" in {requestsFolder} with {\"type\": \"request\", \"task\": \"<the task>\", \"from\": \"Spark\"}.\n{board}Ask at most one question if the task is not clear. Keep this chat short.\nAt the end, tell me in one line who has the task, and that I can close this tab: the Rebel Bot Swarm dashboard keeps the status.",
+          "markdownDescription": "The starter prompt that **Spark** puts in a new Claude Code chat (you press Enter to send it). `{agentsFolder}` = `~/.claude/agents`, `{requestsFolder}` = the requests folder, `{leader}` = the leader name, `{leaderRole}` = the leader role, `{board}` = one line about your board file (empty if no board is set). Empty = the default text."
         }
       }
-    }
+    },
+    "walkthroughs": [
+      {
+        "id": "start",
+        "title": "Start here: Rebel Bot Swarm",
+        "description": "Four steps to run your Claude Code team from the dashboard.",
+        "steps": [
+          {
+            "id": "open",
+            "title": "1. Open and close the dashboard",
+            "description": "Click **Swarm** in the status bar (bottom left) to open the dashboard; click it again to close it. Or use the **Rebel Bot Swarm** icon in the activity bar (left edge), the keys **Ctrl+Alt+S** (Windows, Linux), or the command **Rebel Bot Swarm: Toggle dashboard**.\n[Open the dashboard](command:rebelBotSwarm.show)",
+            "media": {
+              "image": "media/icon.png",
+              "altText": "Rebel Bot Swarm logo"
+            },
+            "completionEvents": [
+              "onCommand:rebelBotSwarm.show",
+              "onCommand:rebelBotSwarm.toggle"
+            ]
+          },
+          {
+            "id": "spark",
+            "title": "2. Press Spark to start work",
+            "description": "**Spark** opens a new Claude Code chat with a starter prompt in the chat box. Press Enter, then say what you want to do. The chat hands the task to the right member.\n[Spark a new chat](command:rebelBotSwarm.spark)",
+            "media": {
+              "image": "media/icon.png",
+              "altText": "Rebel Bot Swarm logo"
+            },
+            "completionEvents": [
+              "onCommand:rebelBotSwarm.spark"
+            ]
+          },
+          {
+            "id": "close",
+            "title": "3. Close chat tabs when the job is handed over",
+            "description": "You do not need to keep the chat open. The dashboard keeps watching your team and shows who is working, who is waiting for you and who is done.",
+            "media": {
+              "image": "media/icon.png",
+              "altText": "Rebel Bot Swarm logo"
+            },
+            "completionEvents": [
+              "onStepSelected"
+            ]
+          },
+          {
+            "id": "save",
+            "title": "4. Save team to keep your pictures and names safe",
+            "description": "Your names, pictures and panel brains are in VS Code's storage folder, which can be deleted when you uninstall. **Save team** writes one .zip file where you choose. **Restore team** puts it back.\n[Save team](command:rebelBotSwarm.saveTeam)",
+            "media": {
+              "image": "media/icon.png",
+              "altText": "Rebel Bot Swarm logo"
+            },
+            "completionEvents": [
+              "onCommand:rebelBotSwarm.saveTeam"
+            ]
+          }
+        ]
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "rebelBotSwarm",
+          "title": "Rebel Bot Swarm",
+          "icon": "media/activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "rebelBotSwarm": [
+        {
+          "type": "webview",
+          "id": "rebelBotSwarm.side",
+          "name": "Swarm"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "rebelBotSwarm.toggle",
+        "key": "ctrl+alt+s"
+      }
+    ]
   }
 }

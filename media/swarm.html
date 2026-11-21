@@ -4,20 +4,23 @@
 <style>
 /* colours: VS Code theme variables first (light, dark and high contrast), own values outside VS Code */
 :root{--bg0:#f4f5f7;--card0:#fff;--ink0:#1d2430;--muted0:#6b7580;--line0:#dde1e6;--accent0:#1f3a5f;--btn0:#1f3a5f;--btnink0:#fff;
- --link:#2a9df4;--work:#1f9d55;--idle:#8a94a0;--wait:#d97706;--closed:#c4c9cf;--ready:#3b82c4}
-@media (prefers-color-scheme:dark){:root{--bg0:#14181e;--card0:#1d232b;--ink0:#e6e9ed;--muted0:#9aa4ae;--line0:#2c343e;--accent0:#8fb3e0;--btn0:#3a6ea5;--closed:#4a535d;--ready:#6fa8dc}}
-body.vscode-dark,body.vscode-high-contrast{--work:#3fb950;--wait:#e3a23a;--closed:#4a535d;--link:#4fb3ff}
+ --link:#2a9df4;--work:#1f9d55;--idle:#8a94a0;--wait:#d97706;--closed:#c4c9cf;--ready:#3b82c4;--lead:#7c3aed;--leadink:#fff}
+@media (prefers-color-scheme:dark){:root{--bg0:#14181e;--card0:#1d232b;--ink0:#e6e9ed;--muted0:#9aa4ae;--line0:#2c343e;--accent0:#8fb3e0;--btn0:#3a6ea5;--closed:#4a535d;--ready:#6fa8dc;--lead:#a78bfa;--leadink:#14152b}}
+body.vscode-dark,body.vscode-high-contrast{--work:#3fb950;--wait:#e3a23a;--closed:#4a535d;--link:#4fb3ff;--lead:#b197fc;--leadink:#14152b}body.vscode-light{--lead:#7c3aed;--leadink:#fff}
 body{--bg:var(--vscode-editor-background,var(--bg0));--card:var(--vscode-sideBar-background,var(--card0));--ink:var(--vscode-foreground,var(--ink0));
  --muted:var(--vscode-descriptionForeground,var(--muted0));--line:var(--vscode-panel-border,var(--vscode-widget-border,var(--line0)));
  --accent:var(--vscode-textLink-foreground,var(--accent0));--btn:var(--vscode-button-background,var(--btn0));--btnink:var(--vscode-button-foreground,var(--btnink0));
  --tile:var(--vscode-editorWidget-background,var(--bg0))}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.4 var(--vscode-font-family,Segoe UI,Arial,sans-serif)}
-header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+header{position:relative;display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
 h1{font-size:16px;margin:0;color:var(--ink);letter-spacing:.2px}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px;padding:10px 14px 0}
-.tile{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:7px 10px;min-width:0}
-.tile .v{font-size:20px;font-weight:700;line-height:1.15}.tile .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
-.tile.wide{grid-column:span 2}.tile .s{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.6}
+.stats{display:flex;flex-wrap:nowrap;gap:6px;padding:8px 14px 0;overflow-x:auto;scrollbar-width:thin}
+.tile{display:flex;align-items:baseline;gap:5px;flex:1 1 auto;min-width:max-content;height:30px;padding:0 9px;background:var(--card);border:1px solid var(--line);border-radius:6px;white-space:nowrap;line-height:28px}
+.tile .v{font-size:14px;font-weight:700}.tile .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+.tile.wide{flex:1 3 160px;min-width:110px;max-width:260px;overflow:hidden}.tile .s{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.tile[role=button]{cursor:pointer}.tile[role=button]:hover{border-color:var(--accent)}.tile[role=button]:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.panel{scroll-margin-top:8px}.panel.flash{animation:flash 1.4s ease-out}@keyframes flash{0%,40%{box-shadow:0 0 0 2px var(--accent)}100%{box-shadow:0 0 0 2px transparent}}
+@media (prefers-reduced-motion:reduce){.panel.flash{animation:none;box-shadow:0 0 0 2px var(--accent)}}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px 10px;margin-bottom:12px}
 .panel>h2{font-size:11px!important;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)!important;margin:0 0 6px!important;display:flex;align-items:center}
 .panel .ww,.panel .feed{border:0;border-radius:0;background:transparent}.panel .card{background:var(--tile)}.muted{color:var(--muted)}.slot{padding:4px 10px;border-radius:12px;background:var(--card);border:1px solid var(--line)}
@@ -58,13 +61,15 @@ main{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:14
 .job{font-size:10.5px;line-height:1.3;color:var(--muted);margin-top:2px;max-height:2.6em;overflow:hidden}
 .tag{display:inline-block;font-size:10px;padding:0 5px;border-radius:7px;background:var(--bg);margin:2px 2px 0 0}
 .card .hint{font-size:10px;margin-top:1px}
+/* the team leader: violet border, left bar and LEAD badge; still clear when idle (grey) */
+.card.lead{border:2px solid var(--lead);box-shadow:inset 4px 0 0 var(--lead);padding-left:8px}.card.lead:hover{border-color:var(--lead)}.card.lead.grey{opacity:.85}.tag.lead{background:var(--lead);color:var(--leadink);font-weight:700;letter-spacing:.4px}.card.lead .name{color:var(--lead);font-weight:700}
 #teamwrap{position:relative}#links{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;overflow:visible}
 #links .ln{fill:none;stroke:var(--link);stroke-linecap:round}#links .ln.on{stroke-width:2.6;filter:drop-shadow(0 0 3px var(--link))}
 #links .pulse{fill:#fff;filter:drop-shadow(0 0 4px var(--link))}#links .node{fill:none;stroke:var(--link);stroke-width:2}
 #links .ln.dash{stroke-dasharray:6 10;animation:flow 1s linear infinite}@keyframes flow{to{stroke-dashoffset:-16}}
 @media (prefers-reduced-motion:reduce){#links .ln.dash{animation:none;stroke-dasharray:none}#links .pulse{display:none}}
 .grid.net{display:block;height:var(--neth,520px)}.grid.net .card{position:absolute;width:96px;flex-direction:column;align-items:center;text-align:center;gap:2px;padding:3px;transform:translate(-50%,-50%);background:transparent!important;border-color:transparent}.grid.net .card:hover{border-color:var(--line)}
-.grid.net .card .job,.grid.net .card .tag,.grid.net .card .hint{display:none}.grid.net .card>div{width:100%}
+.grid.net .card .job,.grid.net .card .tag,.grid.net .card .hint{display:none}.grid.net .card.lead{border-color:transparent;box-shadow:none;padding-left:3px}.grid.net .card.lead::before{content:"";position:absolute;left:50%;top:3px;width:40px;height:40px;margin-left:-20px;border-radius:50%;box-shadow:0 0 0 3px var(--lead);pointer-events:none}.grid.net .card .tag.lead{display:inline-block}.grid.net .card>div{width:100%}
 .toggle{font-size:12px;font-weight:400;color:var(--muted);margin-left:10px;cursor:pointer}.toggle input{vertical-align:middle}
 aside section{margin-bottom:12px}.ww{background:var(--card);border:1px solid var(--line);border-radius:10px;max-height:30vh;overflow:auto}
 .ww .row{display:flex;gap:6px;padding:5px 8px;border-bottom:1px solid var(--line);font-size:12px;align-items:flex-start}.ww .row:last-child{border-bottom:0}
@@ -74,12 +79,12 @@ aside section{margin-bottom:12px}.ww{background:var(--card);border:1px solid var
 section h2{font-size:14px;margin:0 0 8px;color:var(--accent)}section{margin-bottom:16px}
 .feed{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:auto}
 .msg{padding:5px 8px;border-bottom:1px solid var(--line);font-size:12px}.msg .hd{font-size:11px;color:var(--muted)}
-.wait li{margin-bottom:6px;font-size:13px}
+.wait li{margin-bottom:6px;font-size:13px}.wait .decide{font-size:11px;padding:1px 7px;margin-top:1px;flex:none;white-space:nowrap}ul.wait{list-style:none;padding-left:0}.wait li:has(.decide){display:flex;gap:8px;align-items:flex-start}.wait .wt{min-width:0}
 dialog{border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);max-width:520px}
 code{background:var(--bg);padding:2px 5px;border-radius:4px;user-select:all}
 .hint{font-size:11px;font-weight:600;color:var(--ink);margin-top:3px}
 button{font:inherit;padding:5px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
-button.main{background:var(--btn);color:var(--btnink);border-color:var(--btn)}#addbtn{margin-left:auto}
+button.main{background:var(--btn);color:var(--btnink);border-color:var(--btn)}#sparkbtn{margin-left:auto;font-size:1.2em;font-weight:700;padding:8px 22px;border-radius:20px;box-shadow:0 0 0 3px color-mix(in srgb,var(--btn) 35%,transparent)}#sparkbtn:hover,#sparkbtn:focus-visible{box-shadow:0 0 0 5px color-mix(in srgb,var(--btn) 45%,transparent)}#startchip{padding:2px 9px;border-radius:11px;font-size:12px;background:transparent;border:1px solid var(--line);color:var(--accent);cursor:pointer}#startchip[aria-expanded=true]{border-color:var(--accent)}.welcome{position:absolute;top:calc(100% + 4px);left:14px;z-index:20;width:min(440px,calc(100vw - 28px));max-height:75vh;overflow:auto;padding:10px 14px;border:2px solid var(--accent);border-radius:10px;background:var(--card);box-shadow:0 8px 24px rgba(0,0,0,.3);font-size:12.5px}.welcome .lrow{display:flex;gap:6px;align-items:center;margin:4px 0 10px}.welcome .lrow input{flex:1;min-width:0}.welcome h2{margin:0 0 6px;font-size:1.1em}.welcome ol{margin:6px 0 10px 1.2em;padding:0}.welcome li{margin:3px 0}.welcome .row{display:flex;gap:8px;flex-wrap:wrap}
 #nmform label{display:block;font-size:12px;font-weight:600;margin:8px 0 3px}
 #nmform input{width:100%;font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
 #upd{flex:1}#nmmsg,#edmsg{font-weight:600;min-height:1.4em}
@@ -97,9 +102,10 @@ dialog{width:min(600px,94vw);max-height:92vh;padding:0;overflow:auto}#dlgbody,#e
 .pick .grp{flex:0 0 100%;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin-top:4px}.pick button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}.pick button.up{border-radius:8px;line-height:1.3;padding:4px 10px;align-self:center}
 pre.brain{white-space:pre-wrap;font:12px/1.4 Consolas,monospace;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;max-height:180px;overflow:auto;margin:4px 0}
 #dgmsg,#brmsg{font-weight:600}
-header .slot{flex:1 1 300px;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+header .slot{flex:1 1 0;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}header{flex-wrap:nowrap}header>h1,#startchip{flex:none;white-space:nowrap}@media (max-width:640px){#upd{display:none}header>h1{font-size:14px}}#upd{flex:0 1000 auto;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.hgrp{margin-left:auto;flex:0 1 auto;min-width:0;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:6px}.hgrp button{white-space:nowrap}.hgrp button.sec{padding:3px 10px;font-size:12px;background:transparent}#sparkbtn{margin-left:0;font-size:1em;padding:5px 14px;border-radius:16px}
 </style></head><body>
-<header><h1>Rebel Bot Swarm</h1><span class="slot" id="slot" hidden></span><span class="muted" id="upd"></span><button id="addbtn" class="main" type="button">+ Add team member</button></header>
+<header><h1>Rebel Bot Swarm</h1><button id="startchip" type="button" aria-expanded="false" aria-controls="welcome">Start here &#9662;</button><span class="slot" id="slot" hidden></span><span class="muted" id="upd"></span><span class="hgrp" role="group" aria-label="Team actions"><button id="sparkbtn" class="main" type="button" title="Open a new Claude Code chat with your team leader">&#9889; Spark</button><button id="savebtn" class="sec" type="button" title="Save your members, pictures, brains and settings to one .zip file">Save team...</button><button id="restbtn" class="sec" type="button" title="Restore a team from a Save team .zip file or folder">Restore team...</button><button id="addbtn" class="main" type="button">+ Add team member</button></span><section class="welcome" id="welcome" hidden aria-label="Start here"><h2>Start here</h2><label for="leadname"><b>Name your team leader</b> (Spark opens a new chat as this leader)</label><div class="lrow"><input id="leadname" maxlength="40" placeholder="Coordinator"><button id="leadsave" type="button">Save</button><span id="leadmsg" class="muted" aria-live="polite"></span></div><ol><li><b>Open and close the dashboard</b>: click <b>Swarm</b> in the status bar (bottom left), the <b>Rebel Bot Swarm</b> icon in the activity bar (left edge), or press <b>Ctrl+Alt+S</b>. You are here now.</li><li><b>Press Spark</b> to start work: a new Claude Code chat opens with the starter prompt. Press Enter, then say what you want to do.</li><li><b>Close chat tabs when the job is handed over</b>: the dashboard keeps watching your team.</li><li><b>Save team</b> to keep your pictures, names and settings safe (also before you uninstall).</li></ol><div class="row"><button id="wspark" class="main" type="button">&#9889; Spark</button><button id="wsave" type="button">Save team...</button><button id="wdone" type="button">Got it, hide this</button></div></section></header>
+
 <div class="stats" id="stats" aria-label="Summary"></div>
 <main>
  <div>
@@ -422,23 +428,38 @@ dgsend.addEventListener("click",()=>{if(!edM)return;const source=dgsrc.value.tri
  if(source.length>20000||note.length>300){dgDone(false,"Too long: text max 20000, note max 300 characters.");return}
  dgsend.disabled=true;dgmsg.textContent="Saving…";dgmsg.style.color="";if(VS)VS.postMessage({type:"digest",member:edM.id,source,note})});
 function dgDone(ok,msg){dgmsg.textContent=msg;dgmsg.style.color=ok?"var(--work)":"var(--wait)";dgsend.disabled=ok;if(ok){dgsrc.value="";dgnote.value="";dgfile.textContent=""}}
-function render(s){last=s;const byId={};for(const m of s.members)if(m.id)byId[m.id]=m;
+// shared slot, short: "free since 21 Nov 10:15; ..." -> "Free · 21 Nov 10:15", "**Ada** since 9:30 ..." -> "Ada · 9:30"
+function slotShort(h){h=String(h||"").replace(/^[\s(]+/,"").trim();if(!h)return "Free";
+ const tm=/\bsince\s+((?:\d{1,2} [A-Za-z]{3}(?: \d{4})?)?(?:,? ?\d{1,2}:\d{2})?)/i.exec(h),when=tm&&tm[1].trim()?tm[1].trim():"";
+ const who=/^free\b/i.test(h)?"Free":((/^\*\*(.+?)\*\*/.exec(h)||/^([A-Za-z][A-Za-z0-9\-]*(?: [A-Z][A-Za-z0-9\-]*)?)/.exec(h)||[,h.slice(0,24)])[1]);
+ return when?who+" · "+when:who}
+let decT=0;function decideMsg(ok,t){let p=document.getElementById("decmsg");if(!p){p=document.createElement("div");p.id="decmsg";p.setAttribute("role","status");p.style.cssText="font-size:12px;margin:4px 0 6px";wait.parentNode.insertBefore(p,wait)}p.textContent=t;p.style.color=ok?"var(--work)":"var(--wait)"}
+function decideDone(ok,t){clearTimeout(decT);decT=0;decideMsg(ok,t)}
+wait.addEventListener("click",e=>{const b=e.target.closest("button.decide");if(!b)return;if(!VS){decideMsg(false,"Decide: no VS Code link in this page.");return}const k=+b.dataset.k,item=(last.waiting||[])[k];if(typeof item!=="string"){decideMsg(false,"Decide: this item is not in the page now. Wait for the next refresh.");return}decideMsg(true,"Decide: sending...");clearTimeout(decT);decT=setTimeout(()=>decideMsg(false,"Decide: no answer from the extension. Its code may be older than this page: run 'Developer: Reload Window'."),4000);VS.postMessage({type:"decide",k,item})});
+function goTile(el){const id=el&&el.dataset.go,tg=id&&document.getElementById(id);if(!tg)return;const sec=tg.closest("section")||tg;
+ const rm=matchMedia("(prefers-reduced-motion:reduce)").matches;sec.scrollIntoView({behavior:rm?"auto":"smooth",block:"start"});sec.classList.remove("flash");void sec.offsetWidth;sec.classList.add("flash");setTimeout(()=>sec.classList.remove("flash"),1400)}
+stats.addEventListener("click",e=>goTile(e.target.closest(".tile")));
+stats.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.classList.contains("tile")){e.preventDefault();goTile(e.target)}});
+let startSet=false;function startShow(open){welcomeEl.hidden=!open;startchip.setAttribute("aria-expanded",open?"true":"false")}
+function render(s){last=s;if(!startSet){startSet=true;startShow(!!s.startOpen)}const ln=String(s.leaderName||"Coordinator");sparkbtn.textContent="⚡ Spark "+ln;wspark.textContent="⚡ Spark "+ln;if(document.activeElement!==leadname)leadname.value=ln;const byId={};for(const m of s.members)if(m.id)byId[m.id]=m;
  const cnt=st=>s.members.filter(m=>st.includes(m.status)).length,today=new Date().toDateString(),isToday=f=>f.ts&&new Date(f.ts).toDateString()===today;
  const hold=(s.holder||"").replace(/\*/g,"").trim();
- setHtml(stats,[["Working",cnt(["working"]),"var(--work)"],["Waiting for you",cnt(["waiting for you"])+(s.waiting||[]).length,"var(--wait)"],["Idle or ready",cnt(["idle","ready","closed"]),"var(--idle)"],
-  ["Jobs done today",(s.feed||[]).filter(f=>f.kind==="report"&&isToday(f)).length,""],["Messages today",(s.feed||[]).filter(isToday).length,""]]
-  .map(([l,v,c])=>`<div class="tile"><div class="v" style="${c&&v?"color:"+c:""}">${v}</div><div class="l">${l}</div></div>`).join("")+
-  `<div class="tile wide"><div class="s" title="${esc(hold)}">${esc(hold||"free")}</div><div class="l">Shared slot</div></div>`);
+ const waitTip=(s.waiting||[]).length+" open item(s) on the board"+(cnt(["waiting for you"])?"; "+cnt(["waiting for you"])+" session(s) wait for an answer (see the cards)":"");
+ setHtml(stats,[["Working",cnt(["working"]),"var(--work)","","wnow"],["Waiting for you",(s.waiting||[]).length,"var(--wait)",waitTip,"wait"],["Idle or ready",cnt(["idle","ready","closed"]),"var(--idle)","","cards"],
+  ["Jobs done today",(s.feed||[]).filter(f=>f.kind==="report"&&isToday(f)).length,"","","feed"],["Messages today",(s.feed||[]).filter(isToday).length,"","","feed"]]
+  .map(([l,v,c,tip,go])=>`<div class="tile" role="button" tabindex="0" data-go="${go}" title="${esc((tip||l)+" (click to go there)")}"><div class="v" style="${c&&v?"color:"+c:""}">${v}</div><div class="l">${l}</div></div>`).join("")+
+  `<div class="tile wide" role="button" tabindex="0" data-go="blog" title="${esc("Shared slot: "+(hold||"free")+" (click: board log)")}"><div class="l">Slot</div><div class="s">${esc(slotShort(hold))}</div></div>`);
  upd.textContent="updated "+s.updated+(s.error?"  ERROR "+s.error:"");
  const order={"working":0,"waiting for you":1,"idle":2,"ready":2,"closed":3};
  const idx=s.members.map((m,i)=>i).sort((a,b)=>(order[s.members[a].status]??4)-(order[s.members[b].status]??4));
- const ch=idx.map(i=>{const m=s.members[i],cl=m.status==="closed",gr=cl||m.status==="ready"||m.status==="idle";return `<div class="card ${gr?"grey":""}" data-i="${i}" data-id="${esc(m.id||"")}" title="${esc((m.display||m.name)+(m.extra?": "+m.extra:""))}">${avatar(m)}
+ idx.sort((a,b)=>(s.members[b].leader?1:0)-(s.members[a].leader?1:0));
+ const ch=idx.map(i=>{const m=s.members[i],cl=m.status==="closed",gr=cl||m.status==="ready"||m.status==="idle";return `<div class="card ${gr?"grey":""}${m.leader?" lead":""}" data-i="${i}" data-id="${esc(m.id||"")}" title="${esc((m.display||m.name)+(m.extra?": "+m.extra:""))}">${avatar(m)}
   <div><div class="name">${esc(m.display||m.name)}</div><div class="status" style="color:${gr?"var(--idle)":COL[m.status]||"var(--idle)"}">${esc(m.status)}${m.since?" · "+esc(m.since.replace(/^\d+ \w+ /,"")):""}</div>
   ${cl?`<div class="hint" title="${CLOSED_HINT}">closed: reopen to send work</div>`:""}
-  ${m.slot?'<span class="tag">holds the shared slot</span>':""}${m.files.length?`<span class="tag">${m.files.length} file group(s) booked</span>`:""}
+  ${m.leader?'<span class="tag lead" title="Team leader">&#9733; LEAD</span>':""}${m.slot?'<span class="tag">holds the shared slot</span>':""}${m.files.length?`<span class="tag">${m.files.length} file group(s) booked</span>`:""}
   <div class="job">${esc(m.job)}</div></div></div>`}).join("");
  if(ch!==cards._h){cards.innerHTML=ch;cards._h=ch}   // same cards: keep the animations running
- wait.innerHTML=s.waiting.map(w=>`<li>${esc(w.slice(0,260))}${w.length>260?"…":""}</li>`).join("")||"<li class='muted'>Nothing listed</li>";
+ wait.innerHTML=s.waiting.map((w,k)=>`<li><button type="button" class="decide" data-k="${k}" title="Ask your leader to decide this item (in the leader's own chat)">Decide &#9656;</button><span class="wt">${esc(w.slice(0,260))}${w.length>260?"…":""}</span></li>`).join("")||"<li class='muted'>Nothing listed</li>";
  feed.innerHTML=s.feed.map(f=>`<div class="msg"><div class="hd">${esc(f.time)} · <b>${esc(f.from)}</b> → <b>${esc(f.to)}</b>${f.kind&&f.kind!=="message"?`<span class="kind">${esc(f.kind)}</span>`:""}</div>${esc(f.text)}</div>`).join("")||"<div class='msg muted'>No messages yet</div>";
  const mini=w=>{const m=byId[w.id];return m?avatar({...m,status:"working"}):""};
  setHtml(wnow,(s.working||[]).map(w=>`<div class="row">${mini(w)}<div><b>${esc(w.who)}</b> <span class="t">${esc(w.time)}</span><br>${esc(w.task)}${w.step?`<br><span class="step">${esc(w.step)}</span>`:""}</div></div>`).join("")||"<div class='row muted'>Nobody is working now</div>");
@@ -469,7 +490,8 @@ function drawLinks(){const s=last,now=Date.now(),box=teamwrap.getBoundingClientR
 // NETWORK VIEW: the cards as nodes on a ring (the busiest in the middle ring), lines between them
 function layoutNet(){const on=netview.checked;cards.classList.toggle("net",on);const cs=[...cards.querySelectorAll(".card")];
  if(!on){for(const c of cs){c.style.left="";c.style.top=""}return}
- const w=cards.clientWidth||600,n=cs.length,H=Math.max(380,Math.min(820,120+n*36));cards.style.setProperty("--neth",H+"px");
+ const w=cards.clientWidth||600,n=cs.length,top=cards.getBoundingClientRect().top+window.scrollY,fit=window.innerHeight-top-22;   // fill the height that is left
+ const H=Math.round(Math.max(300,Math.min(Math.max(fit,300),120+n*44)));cards.style.setProperty("--neth",H+"px");
  const deg={};for(const l of (last.links||[])){deg[l.from]=(deg[l.from]||0)+1;deg[l.to]=(deg[l.to]||0)+1}
  const hub=cs.reduce((h,c)=>(deg[c.dataset.id]||0)>(h?deg[h.dataset.id]||0:0)?c:h,null),ring=cs.filter(c=>c!==hub);   // the busiest node in the middle
  if(hub){hub.style.left=w/2+"px";hub.style.top=H/2+"px"}
@@ -477,7 +499,15 @@ function layoutNet(){const on=netview.checked;cards.classList.toggle("net",on);c
 netview.addEventListener("change",()=>{try{localStorage.setItem("rbs.net",netview.checked?"1":"0")}catch(e){}links._h="";layoutNet();drawLinks()});
 try{netview.checked=localStorage.getItem("rbs.net")==="1"}catch(e){}
 let rz=0;new ResizeObserver(()=>{clearTimeout(rz);rz=setTimeout(()=>{if(last.members){links._h="";layoutNet();drawLinks()}},150)}).observe(teamwrap);
+window.addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{if(last.members&&netview.checked){links._h="";layoutNet();drawLinks()}},150)});
+const welcomeEl=document.getElementById("welcome"),startchip=document.getElementById("startchip"),sparkbtn=document.getElementById("sparkbtn"),wspark=document.getElementById("wspark"),leadname=document.getElementById("leadname"),leadsave=document.getElementById("leadsave"),leadmsg=document.getElementById("leadmsg");
 // ADD TEAM MEMBER: one request file in the requests folder (your setting, or VS Code's storage folder for this extension)
+const spk=()=>{if(VS)VS.postMessage({type:"spark"})};document.getElementById("sparkbtn").addEventListener("click",spk);document.getElementById("wspark").addEventListener("click",spk);document.getElementById("wsave").addEventListener("click",()=>{if(VS)VS.postMessage({type:"saveTeam"})});document.getElementById("wdone").addEventListener("click",()=>{startShow(false);if(VS)VS.postMessage({type:"dismissWelcome"})});
+startchip.addEventListener("click",()=>{const open=welcomeEl.hidden;startShow(open);if(VS)VS.postMessage({type:"startOpen",open})});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!welcomeEl.hidden){startShow(false);if(VS)VS.postMessage({type:"startOpen",open:false});startchip.focus()}});
+function leadSave(){const v=leadname.value.trim();if(!v||v.length>40){leadmsg.textContent="Type a name (max 40 characters).";return}leadmsg.textContent="Saving…";if(VS)VS.postMessage({type:"setLeader",name:v})}
+leadsave.addEventListener("click",leadSave);leadname.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();leadSave()}});
+document.getElementById("savebtn").addEventListener("click",()=>{if(VS)VS.postMessage({type:"saveTeam"})});document.getElementById("restbtn").addEventListener("click",()=>{if(VS)VS.postMessage({type:"restoreTeam"})});
 addbtn.addEventListener("click",()=>{nmmsg.textContent="";nmsend.disabled=false;nmdlg.showModal();nmname.focus()});
 nmcancel.addEventListener("click",()=>nmdlg.close());
 function nmDone(ok,msg){nmmsg.textContent=msg;nmmsg.style.color=ok?"var(--work)":"var(--wait)";nmsend.disabled=ok;if(ok){nmname.value="";nmjob.value=""}}
@@ -486,11 +516,11 @@ nmform.addEventListener("submit",async e=>{e.preventDefault();const name=nmname.
  if(name.length>60||job.length>200){nmDone(false,"Too long: name max 60, job max 200 characters.");return}
  nmsend.disabled=true;nmmsg.textContent="Saving…";nmmsg.style.color="";
  if(VS)VS.postMessage({type:"newMember",name,job});else nmDone(false,"Open this page from VS Code.")});
-if(VS){window.addEventListener("message",e=>{const d=e.data||{};if(d.type==="state"&&d.state&&d.state.members)render(d.state);else if(d.type==="newMemberResult")nmDone(!!d.ok,String(d.msg||""));else if(d.type==="role")roleIn(d);else if(d.type==="editResult")edDone(!!d.ok,String(d.msg||""));
+if(VS){window.addEventListener("message",e=>{const d=e.data||{};if(d.type==="decideResult")decideDone(!!d.ok,String(d.msg||""));else if(d.type==="state"&&d.state&&d.state.members)render(d.state);else if(d.type==="newMemberResult")nmDone(!!d.ok,String(d.msg||""));else if(d.type==="role")roleIn(d);else if(d.type==="editResult")edDone(!!d.ok,String(d.msg||""));
  else if(d.type==="brain")brainIn(d);else if(d.type==="brainResult"){brmsg.textContent=String(d.msg||"");brmsg.style.color=d.ok?"var(--work)":"var(--wait)"}
  else if(d.type==="uploadResult"){if(d.ok&&edM&&d.member===edM.id){edAv="pic:"+d.file;pickRender();edsends(false)}edmsg.textContent=String(d.msg||"");edmsg.style.color=d.ok?"var(--work)":"var(--wait)"}
  else if(d.type==="attachResult"){if(edM&&d.id===edM.id){dgfile.textContent=d.name?String(d.name):"";dgsend.disabled=false;dgmsg.textContent=d.msg?String(d.msg):""}}
- else if(d.type==="digestResult")dgDone(!!d.ok,String(d.msg||""))});
+ else if(d.type==="digestResult")dgDone(!!d.ok,String(d.msg||""));else if(d.type==="leaderResult"){leadmsg.textContent=String(d.msg||"");leadmsg.style.color=d.ok?"var(--work)":"var(--wait)"}});
  VS.postMessage({type:"ready"})}
 else upd.textContent="Open this page from VS Code (Rebel Bot Swarm: Show).";
 </script></body></html>
