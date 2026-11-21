@@ -2,8 +2,9 @@
 
 ## 0.5.3
 - **Helpers light their card wherever they were started.** A helper (subagent) started from a session in any
-  project folder now lights its member's card, not only one started in this window's folders. Other folders are
-  only checked for files written in the last 2 minutes, so the dashboard stays quick.
+  project folder now lights its member's card, not only one started in this window's folders. As in this window's
+  own folders, a helper with Claude Code's record stays lit for 15 minutes between writes (long steps), one without
+  it for 2 minutes. Other folders are only read for helpers inside that time, so the dashboard stays quick.
 - **Helpers are named from Claude Code's own record.** The card is found from the helper's agent type (for example
   `ada-lovelace` lights the card Ada), so the brief no longer has to start "You are ...". That line is still used
   when there is no record.

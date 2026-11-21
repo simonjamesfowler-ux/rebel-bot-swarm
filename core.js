@@ -303,9 +303,10 @@ function helperFiles(dirs) {
 }
 /** 0.5.3: helpers started from a session in ANY other project folder (~/.claude/projects/*), so a card lights
  *  wherever the coordinator's session was started. Stat only; a file is kept (and later read) only when it was
- *  written inside the HELPER_SECS window. skip = the project folders helperFiles already reads. */
+ *  written inside the window: RUN_SECS when Claude Code wrote a .meta.json beside it (seen in the folder listing, no
+ *  extra read), else HELPER_SECS. skip = the project folders helperFiles already reads. */
 function runningElsewhere(skip) {
-  const out = [], cutoff = Date.now() - HELPER_SECS * 1000;
+  const out = [], now = Date.now();
   let names = [];
   try { names = fs.readdirSync(PROJECTS); } catch (e) { return out; }
   for (const n of names) {
@@ -320,8 +321,8 @@ function runningElsewhere(skip) {
       try { files = fs.readdirSync(sub); } catch (e) { continue; }
       for (const fn of files) {
         if (!fn.endsWith(".jsonl")) continue;
-        const p = path.join(sub, fn);
-        try { const st = fs.statSync(p); if (st.isFile() && st.mtimeMs >= cutoff) out.push({ p, st, parent: s, elsewhere: true }); } catch (e) { continue; }
+        const p = path.join(sub, fn), secs = files.includes(fn.replace(/\.jsonl$/, ".meta.json")) ? RUN_SECS : HELPER_SECS;
+        try { const st = fs.statSync(p); if (st.isFile() && st.mtimeMs >= now - secs * 1000) out.push({ p, st, parent: s, elsewhere: true }); } catch (e) { continue; }
       }
     }
   }
