@@ -497,7 +497,7 @@ function buildState(cfg, picUri) {
   return { updated: `${p2(now.getHours())}:${p2(now.getMinutes())}:${p2(now.getSeconds())}`, now: now.getTime(), holder: b.holder, waiting: b.waiting,
            view: vt ? vt.name : "", viewMissing: !vt && !!String(cfg.team || "").trim() ? String(cfg.team).trim() : "",
            board: b.found, members: shownMembers, feed: out, links: shownLinks.slice(0, 80), working: shownWorking.sort(desc), steps: steps.sort(desc).slice(0, 40), log,
-           orphans, pics: choices, styles: STYLES, avatarsSet: !!avDir, leaderName: lname, teams: shownTeams, allTeams: teams.map(t => t.name), teamParents: Object.fromEntries(teams.filter(t => t.parent).map(t => [t.name, t.parent])), roles: roleDefs };
+           orphans, waitingSent: (() => { const d = decidedItems(cfg.requestsFolder); return b.waiting.map(w => d[normItem(w)] || ""); })(), pics: choices, styles: STYLES, avatarsSet: !!avDir, leaderName: lname, teams: shownTeams, allTeams: teams.map(t => t.name), teamParents: Object.fromEntries(teams.filter(t => t.parent).map(t => [t.name, t.parent])), roles: roleDefs };
 }
 
 // ---- edit panel: name and avatar (members.json), task and role instructions (a request file for the coordinator)
@@ -1015,20 +1015,81 @@ function condenseRequest(m, mode, requestsFolder) {
 }
 
 /** Decide: one request file for the leader, who watches the requests folder and asks the question in its own chat. */
-function decideRequest(item, requestsFolder) {
+function decideRequest(item, requestsFolder, ctx) {
   const dir = expandHome(requestsFolder), it = String(item || "").replace(/\s+/g, " ").trim().slice(0, 1500);
   if (!dir || !it) return { ok: false, msg: "Not saved: no requests folder or item." };
-  const t = stamp(), body = JSON.stringify({ type: "decide", item: it, time: t.iso, from: "Decide" }, null, 2);
+  ctx = ctx || {};
+  const where = boardLine(ctx.boardFile, item), raised = raisedBy(item, ctx.members || [], where.section);
+  const t = stamp(), body = JSON.stringify({ type: "decide", item: it, raised_by: raised, id: where.id, board_line: where.line,
+    board: where.file, board_section: where.section, time: t.iso, from: "Decide" }, null, 2);
   try { fs.mkdirSync(dir, { recursive: true }); } catch (e) { return { ok: false, msg: "Not saved: " + ((e && e.message) || e.code || "folder error") }; }
   // Names have 1-second steps: a 2nd click in the same second gets " 2", " 3"... (never overwrites a file).
   for (let n = 1; n <= 20; n++) {
     const file = `DECIDE ${t.file}${n > 1 ? " " + n : ""}.json`;
-    try { fs.writeFileSync(path.join(dir, file), body, { encoding: "utf8", flag: "wx" }); return { ok: true, file }; }
+    try { fs.writeFileSync(path.join(dir, file), body, { encoding: "utf8", flag: "wx" }); return { ok: true, file, raised_by: raised, id: where.id }; }
     catch (e) { if (!e || e.code !== "EEXIST") return { ok: false, msg: "Not saved: " + ((e && e.message) || e.code || "write error") }; }
   }
   return { ok: false, msg: "Not saved: 20 requests in one second." };
 }
 
+/** 0.5.3 Decide: where the item sits on the board. id = the board line exactly as written ("- ..."), line = its number
+ * (1 = first line), section = the "## ..." heading it is under. Empty when the board or the line is not found. */
+function boardLine(boardFile, item) {
+  const file = expandHome(boardFile || ""), out = { id: "", line: 0, section: "", file: file || "" };
+  if (!file) return out;
+  let lines;
+  try { lines = fs.readFileSync(file, "utf8").split(/\r?\n/); } catch (e) { return out; }
+  const want = normItem(item);
+  let sec = "";
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (l.startsWith("## ")) { sec = l.slice(3).trim(); continue; }
+    if (l.startsWith("- ") && normItem(l) === want) return { id: l.trim(), line: i + 1, section: sec, file };
+  }
+  return out;
+}
+/** 0.5.3 Decide: who raised an item = the member the item line names (the earliest name in the line; a name before the
+ * first ":" wins), else "board section: <heading>". members: the dashboard cards ({name, display}). */
+function raisedBy(item, members, section) {
+  const text = " " + String(item || "").toLowerCase().replace(/[^a-z0-9]+/g, " ") + " ";
+  const head = String(item || "").split(":")[0].toLowerCase().replace(/[^a-z0-9]+/g, " ");
+  let best = null;
+  for (const m of members || []) {
+    const shown = String(m.display || m.name || "").trim();
+    const keys = [m.display, m.name].filter(Boolean).flatMap(n => { const s = String(n).split(" - ")[0].split(" (")[0].toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+      const f = s.split(" ")[0] || ""; return [s, f.length >= 3 && !STOP.has(f) ? f : ""]; }).filter(Boolean);
+    for (const k of keys) {
+      const at = text.indexOf(" " + k + " ");
+      if (at < 0) continue;
+      const score = (head.includes(k) ? 0 : 100000) + at;
+      if (!best || score < best.score) best = { score, name: shown.split(" - ")[0].split(" (")[0] };
+    }
+  }
+  return best ? best.name : (section ? "board section: " + section : "not known");
+}
+/** 0.5.3 Decide already sent: { normItem: time } from the DECIDE files in the requests folder (newest wins). */
+function decidedItems(requestsFolder) {
+  const dir = expandHome(requestsFolder), out = {};
+  if (!dir) return out;
+  let names = [];
+  try { names = fs.readdirSync(dir).filter(n => /^DECIDE .*\.json$/.test(n)).sort(); } catch (e) { return out; }
+  for (const n of names.slice(-200)) {
+    try { const d = JSON.parse(fs.readFileSync(path.join(dir, n), "utf8")); if (d && d.item) out[normItem(d.item)] = String(d.time || ""); } catch (e) { /* skip */ }
+  }
+  return out;
+}
+/** 0.5.3 the leader's chat is running: a live session (pid alive) whose id is the leader card's or the leaderSessionId
+ * setting, or whose tab name starts with the leader's name or card name. Returns { id, name } or null. */
+function leaderLive(names, ids, requestsFolder) {
+  const live = liveSessions();
+  // the leader's own note that it watches the requests folder: "<requests>/LEADER WATCH.json" {"sessionId": "..."}
+  const dir = expandHome(requestsFolder || "");
+  if (dir) { try { const w = JSON.parse(fs.readFileSync(path.join(dir, "LEADER WATCH.json"), "utf8")); if (w && live[w.sessionId]) return { id: w.sessionId, name: live[w.sessionId].name || "", watch: true }; } catch (e) { /* no note */ } }
+  const want = (names || []).map(n => String(n || "").trim().toLowerCase()).filter(Boolean), idset = new Set((ids || []).filter(Boolean));
+  for (const [sid, d] of Object.entries(live)) if (idset.has(sid)) return { id: sid, name: d.name || "" };
+  for (const [sid, d] of Object.entries(live)) { const n = String(d.name || "").toLowerCase(); if (n && want.some(w => n.startsWith(w))) return { id: sid, name: d.name || "" }; }
+  return null;
+}
 /** Text for comparing board items: no CR, markdown marks, list bullets or extra spaces; NFC; no trailing full stop. */
 function normItem(s) {
   return String(s == null ? "" : s).normalize("NFC").replace(/\r/g, "").replace(/^\s*[-*+]\s+/, "").replace(/[*_`]/g, "")
@@ -1105,7 +1166,7 @@ function fileTokens(p, since) {
   let st;
   try { st = fs.statSync(p); } catch (e) { return null; }
   let c = tokCache.get(p);
-  if (!c || c.since !== since || st.size < c.off) c = { since, off: -1, ids: new Set(), s: { input: 0, output: 0, cacheWrite: 0, cacheRead: 0 } };
+  if (!c || c.since !== since || st.size < c.off) c = { since, off: -1, ids: new Set(), s: { input: 0, output: 0, cacheWrite: 0, cacheRead: 0 }, models: {} };
   tokCache.set(p, c);
   if (st.mtimeMs < since) { c.off = st.size; return c; }   // not written today
   let fd;
@@ -1131,6 +1192,15 @@ function fileTokens(p, since) {
         const u = e.message.usage;
         c.s.input += u.input_tokens || 0; c.s.output += u.output_tokens || 0;
         c.s.cacheWrite += u.cache_creation_input_tokens || 0; c.s.cacheRead += u.cache_read_input_tokens || 0;
+        // 0.5.3 the model of the reply and the effort level the transcript records for it
+        const mdl = String(e.message.model || "");
+        if (mdl && !mdl.startsWith("<")) {
+          const n = (u.input_tokens || 0) + (u.output_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0);
+          const mm = c.models[mdl] || (c.models[mdl] = { tokens: 0, effort: {} });
+          mm.tokens += n;
+          const ef = typeof e.effort === "string" ? e.effort : typeof e.perTurnEffort === "string" ? e.perTurnEffort : "";
+          if (ef) mm.effort[ef] = (mm.effort[ef] || 0) + n;
+        }
       }
     }
   } catch (e) { /* unreadable now: keep what was counted */ } finally { if (fd !== undefined) try { fs.closeSync(fd); } catch (x) { /* closed */ } }
@@ -1140,7 +1210,9 @@ function fileTokens(p, since) {
  * no transcript of that card was found (no open chat, no helper today). other = helpers that match no card. */
 function tokenUse() {
   const since = midnight(), zero = () => ({ input: 0, output: 0, cacheWrite: 0, cacheRead: 0, total: 0, chats: 0 });
-  const add = (r, c) => { if (!c) return; for (const k of ["input", "output", "cacheWrite", "cacheRead"]) r[k] += c.s[k]; r.chats++; };
+  const add = (r, c) => { if (!c) return; for (const k of ["input", "output", "cacheWrite", "cacheRead"]) r[k] += c.s[k]; r.chats++;
+    r.models = r.models || {};
+    for (const [m, v] of Object.entries(c.models || {})) { const t = r.models[m] || (r.models[m] = { tokens: 0, effort: {} }); t.tokens += v.tokens; for (const [e, n] of Object.entries(v.effort)) t.effort[e] = (t.effort[e] || 0) + n; } };
   if (!lastTok) return { since: new Date(since).toISOString(), rows: [], other: zero(), total: zero(), ready: false };
   const rows = lastTok.members.map(m => ({ id: m.id, name: m.name, team: m.team, ...zero(), known: false }));
   const byId = new Map(rows.map(r => [r.id, r])), other = zero();
@@ -1158,5 +1230,5 @@ function tokenUse() {
   return { since: new Date(since).toISOString(), rows, other, total, ready: true };
 }
 
-module.exports = { buildState, newMemberRequest, tokenUse, saveBotify, brainFolder, moveSettings, editMember, roleInfo, brainInfo, brainFor, createBrain, savePicture, digestRequest,
+module.exports = { buildState, newMemberRequest, tokenUse, saveBotify, brainFolder, moveSettings, boardLine, raisedBy, decidedItems, leaderLive, editMember, roleInfo, brainInfo, brainFor, createBrain, savePicture, digestRequest,
   matchAgent, agentIndex, expandHome, decideRequest, findWaiting, condenseRequest, contextTokens, condenseInfo, teamList, roleList, joinTeam, leaveTeam, teamGroups, TEAM_COLOURS, normItem, findLeaderSession, _resetLimit: () => { lastRequest = 0; } };

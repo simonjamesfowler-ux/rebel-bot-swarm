@@ -501,16 +501,30 @@ async function decide(k, item) {
     if (i < 0) return fail(`Decide: this item is not on the board now (${lastWaiting.length} open items). The board has changed: try again.`);
     const it = lastWaiting[i];
     // 1. The request file FIRST: the leader watches the requests folder and asks the question in its own chat.
-    const folder = cfg().requestsFolder, req = core.decideRequest(it, folder);
+    const c = cfg(), folder = c.requestsFolder, members = [...lastCondense.values()];
+    const req = core.decideRequest(it, folder, { boardFile: c.boardFile, members });
     if (!req.ok) return fail(`Decide: request file not saved in ${folder || "(no requests folder)"}: ${req.msg}`);
     log(`Decide request file saved: ${path.join(core.expandHome(folder), req.file)}`);
-    // 2. The leader's own chat (setting leaderSessionId, else the newest chat whose tab title starts with the leader name).
+    // 2. 0.5.3 (Simon, option 1): while the leader's chat is running it watches the requests folder, so no tab opens.
+    const lc = members.find(x => x.leader), setId = String(vscode.workspace.getConfiguration("rebelBotSwarm").get("leaderSessionId", "") || "").trim();
+    let live = null;
+    try { live = core.leaderLive([lead, lc && lc.display, lc && String(lc.name || "").split(" - ")[0]], [setId, lc && lc.sid], folder); } catch (e) { log("Decide: live check failed: " + ((e && e.stack) || e)); }
+    const shown = lastOpenName || lead;
+    if (live) {
+      const msg = `Sent to ${shown}: ${req.file} (raised by ${req.raised_by}). ${shown}'s chat picks it up from the requests folder.`;
+      log(msg + ` Live session ${live.id} (${live.name}).`);
+      vscode.window.setStatusBarMessage("Decide: sent to " + shown, 4000);
+      push();   // the item shows "Sent to ..." at once
+      return reply({ ok: true, msg, file: req.file, how: "queued", to: shown });
+    }
+    // 3. No leader chat running: the old way (a new chat with the decision prompt), with a short notice.
     let sid = "", how = "";
     try { sid = leaderSession(); } catch (e) { log("Decide: leader chat search failed: " + ((e && e.stack) || e)); }
     try {
       if (sid) how = await decideInLeader(sid, it);
       else how = (await spark(decidePrompt(it), null, true)) === "clipboard" ? "clipboard" : "new";
     } catch (e) { log("Decide: chat open failed: " + ((e && e.stack) || e)); how = ""; }
+    vscode.window.showWarningMessage(`Decide: ${shown}'s chat is not running, so a new chat opens with the question.`);
     const tail = how === "leader" ? `The prompt is in ${lead}'s chat box: press Enter to send it.`
       : how === "new" ? `No chat for ${lead} was found, so a new chat is open with the decision prompt: press Enter to send it.`
       : how === "clipboard" ? "The decision prompt is on the clipboard: paste it into a Claude Code chat."

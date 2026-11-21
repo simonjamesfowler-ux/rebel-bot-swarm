@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.4
+- **Decide goes to your leader's own chat.** While the leader's chat is running, Decide opens no tab: it writes
+  "DECIDE <time>.json" in the requests folder (item, raised_by, the board line as its id, board, section, time); the
+  leader watches that folder, asks you, and sends the answer to whoever raised the item. The item shows "Sent to
+  <leader>". The leader marks its running chat with "LEADER WATCH.json" {"sessionId": "..."} in the requests folder.
+  With no leader chat running, Decide opens a new chat with the question and says so.
+- **Tokens: the model each member used** (for example Opus 5.5) beside the row; hover for the tokens per model and
+  the effort level the transcript records.
+
 ## 0.5.3
 - **Helpers light their card wherever they were started.** A helper (subagent) started from a session in any
   project folder now lights its member's card, not only one started in this window's folders. As in this window's
