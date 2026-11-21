@@ -60,10 +60,21 @@ main{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:14
 .name{font-weight:600;font-size:12px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.status{font-size:10.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .job{font-size:10.5px;line-height:1.3;color:var(--muted);margin-top:2px;max-height:2.6em;overflow:hidden}
 .tag{display:inline-block;font-size:10px;padding:0 5px;border-radius:7px;background:var(--bg);margin:2px 2px 0 0}
-.card .hint{font-size:10px;margin-top:1px}
+.card .hint{font-size:10px;margin-top:1px}.card{align-items:center}.card.tm{box-shadow:inset 4px 0 0 var(--tc);padding-left:9px}.grid.net .card.tm{box-shadow:none;padding-left:3px}.grid.net .card.tm .name{border-bottom:2px solid var(--tc)}
+/* 0.5.1: a node is only as wide as what it shows, and the team underline only as wide as the name */
+#cards.grid.net .card{width:auto;min-width:56px;max-width:116px}#cards.grid.net .card>div{width:auto;max-width:112px}#cards.grid.net .card .name{display:inline-block;max-width:112px;vertical-align:top;font-size:13px}#cards.grid.net .card .name,#cards.grid.net .card .status{position:relative;z-index:1;background:var(--bg);padding:0 2px;border-radius:3px}#dlgbody .cact{margin:0 0 12px}
+.thead{grid-column:1/-1;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;font-size:12px;padding:5px 2px 0;margin-top:4px;border-top:3px solid var(--tc,var(--line))}.thead.swarm{border-top-color:var(--lead);margin-top:0}.thead.sub{margin-left:18px;border-top-style:dashed;border-top-width:2px}
+.thead .tn{margin-left:auto;font-size:11px;color:var(--muted)}.tempty{grid-column:1/-1;font-size:11px;padding:2px}.grid.net .thead,.grid.net .tempty{display:none}
+.tag.tlead{background:var(--ink);color:var(--bg);font-weight:700;letter-spacing:.3px}.viewchip{padding:2px 9px;border-radius:12px;font-size:12px;font-weight:700;border:1px solid var(--lead);color:var(--lead)}.viewchip.bad{border-color:var(--wait);color:var(--wait)}
+.tr2{display:flex;gap:10px}.tr2>div{flex:1;min-width:0}.tr2 select{width:100%}
+#links .tlink{fill:none;stroke-width:1.6;stroke-opacity:.6;stroke-dasharray:3 4}
+.cact{display:flex;gap:5px;align-items:center;margin-top:3px}.cond{font-size:10px;padding:0 6px;line-height:16px;white-space:nowrap}.cond:disabled{opacity:.45;cursor:not-allowed}
+.cond.now{background:var(--wait);color:#1b1b1b;font-weight:700;border-color:var(--wait);animation:condp 2s ease-in-out infinite}@keyframes condp{50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--wait) 35%,transparent)}}
+.ctx{font-size:10px;color:var(--muted)}.ctx.big{color:var(--wait);font-weight:700}.card.grey:has(.cond.now){opacity:1}.card.grey:has(.cond.now) .av{filter:none}.grid.net .cact{display:none}
+@media (prefers-reduced-motion:reduce){.cond.now{animation:none}}
 /* the team leader: violet border, left bar and LEAD badge; still clear when idle (grey) */
 .card.lead{border:2px solid var(--lead);box-shadow:inset 4px 0 0 var(--lead);padding-left:8px}.card.lead:hover{border-color:var(--lead)}.card.lead.grey{opacity:.85}.tag.lead{background:var(--lead);color:var(--leadink);font-weight:700;letter-spacing:.4px}.card.lead .name{color:var(--lead);font-weight:700}
-#teamwrap{position:relative}#links{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;overflow:visible}
+#teamwrap{position:relative}#links{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:visible}
 #links .ln{fill:none;stroke:var(--link);stroke-linecap:round}#links .ln.on{stroke-width:2.6;filter:drop-shadow(0 0 3px var(--link))}
 #links .pulse{fill:#fff;filter:drop-shadow(0 0 4px var(--link))}#links .node{fill:none;stroke:var(--link);stroke-width:2}
 #links .ln.dash{stroke-dasharray:6 10;animation:flow 1s linear infinite}@keyframes flow{to{stroke-dashoffset:-16}}
@@ -96,15 +107,24 @@ button.main{background:var(--btn);color:var(--btnink);border-color:var(--btn)}#s
 .pick svg{width:48px;height:48px}a.lnk{color:var(--accent);cursor:pointer;text-decoration:underline}
 dialog{width:min(600px,94vw);max-height:92vh;padding:0;overflow:auto}#dlgbody,#edform{padding:0 16px}#edform{margin:10px 0 14px}
 .dlgbar{position:sticky;top:0;z-index:3;display:flex;gap:8px;align-items:center;background:var(--card);border-bottom:1px solid var(--line);padding:8px 16px}
-.dlgbar b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--accent)}
+.dlgbar b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--accent)}#edmsg{flex:0 1 auto;min-width:0;max-width:45%;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 0.5.1 select boxes like the text fields: theme colours, rounded, own chevron, focus ring, same height */
+form select,#edform select,.botctl select{-webkit-appearance:none;appearance:none;width:100%;height:34px;font:inherit;padding:0 30px 0 8px;border:1px solid var(--vscode-dropdown-border,var(--line));border-radius:6px;background-color:var(--vscode-dropdown-background,var(--bg));color:var(--vscode-dropdown-foreground,var(--ink));cursor:pointer;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 15px) 14px,calc(100% - 10px) 14px;background-size:5px 5px,5px 5px;background-repeat:no-repeat}form select:hover,.botctl select:hover{border-color:var(--accent)}form select:focus-visible,.botctl select:focus-visible{outline:2px solid var(--vscode-focusBorder,var(--accent));outline-offset:1px}form select option,.botctl select option{background:var(--vscode-dropdown-listBackground,var(--vscode-dropdown-background,var(--card)));color:var(--vscode-dropdown-foreground,var(--ink))}form input{min-height:34px}
 .avsel{position:relative}#avbtn{display:flex;gap:8px;align-items:center;width:100%;text-align:left}#avbtn svg{width:32px;height:32px;flex:0 0 32px}#avlabel{flex:1}
 .avsel .pick{position:absolute;left:0;right:0;top:100%;z-index:4;margin-top:4px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px;max-height:260px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
 .pick .grp{flex:0 0 100%;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin-top:4px}.pick button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}.pick button.up{border-radius:8px;line-height:1.3;padding:4px 10px;align-self:center}
 pre.brain{white-space:pre-wrap;font:12px/1.4 Consolas,monospace;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;max-height:180px;overflow:auto;margin:4px 0}
 #dgmsg,#brmsg{font-weight:600}
 header .slot{flex:1 1 0;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}header{flex-wrap:nowrap}header>h1,#startchip{flex:none;white-space:nowrap}@media (max-width:640px){#upd{display:none}header>h1{font-size:14px}}#upd{flex:0 1000 auto;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.hgrp{margin-left:auto;flex:0 1 auto;min-width:0;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:6px}.hgrp button{white-space:nowrap}.hgrp button.sec{padding:3px 10px;font-size:12px;background:transparent}#sparkbtn{margin-left:0;font-size:1em;padding:5px 14px;border-radius:16px}
+/* 0.5.1 small buttons (Simon 21 Nov: "the buttons on top can be smaller"): one row, 32px tall, 12px text; Spark is the main one by its colour only */
+.hgrp{flex-wrap:nowrap;gap:5px}.hgrp button,.hgrp button.sec,#sparkbtn{display:inline-block;vertical-align:middle;height:32px;padding:0 10px;font-size:12px;line-height:30px;border-radius:6px;box-shadow:none}#sparkbtn{font-weight:600;padding:0 12px}#sparkbtn:hover,#sparkbtn:focus-visible{box-shadow:0 0 0 2px color-mix(in srgb,var(--btn) 45%,transparent)}.hgrp button.add{border-color:var(--btn);color:var(--ink)}.hgrp .sm{display:none}.hgrp button[hidden]{display:none}
+.tokpop{position:absolute;top:calc(100% + 4px);right:14px;z-index:20;width:min(380px,calc(100vw - 28px));max-height:70vh;overflow:auto;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);box-shadow:0 8px 24px rgba(0,0,0,.3);font-size:12px}.tokpop[hidden]{display:none}.stats.stats{flex-wrap:wrap;overflow-x:visible}@media (max-width:820px){body main{grid-template-columns:minmax(0,1fr)}}   /* 0.5.1: the figure boxes wrap on narrow windows: nothing scrolls sideways */
+.orph{border:1px solid var(--wait);border-radius:8px;padding:8px 10px;margin:4px 0 10px;font-size:12px}.orph[hidden]{display:none}.orph h4{margin:0 0 4px}.orow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:5px 0}.orow .ok{flex:1 1 180px;min-width:0}.orow select{width:auto;min-width:150px;max-width:220px}
+#botdlg{width:min(640px,94vw)}.botwrap{padding:12px 14px}.botwrap h3{margin:0 0 4px}.botcols{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}.botdrop{position:relative;width:300px;max-width:100%;aspect-ratio:1;border:2px dashed var(--line);border-radius:10px;overflow:hidden;background:var(--bg);touch-action:none}.botdrop:focus-visible{outline:2px solid var(--accent)}.botdrop.over{border-color:var(--accent)}#botcv{width:100%;height:100%;display:block;cursor:move}#botempty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);pointer-events:none}#botempty[hidden]{display:none}.botrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:6px;font-size:12px}.botsmall{font-size:11.5px;margin:4px 0 0;max-width:300px}.botright{flex:1;min-width:200px}.botprev{width:150px;height:150px}.botprev svg{width:150px;height:150px}.botctl{display:grid;grid-template-columns:1fr;gap:5px;margin-top:8px;font-size:12px}.botctl label{display:flex;gap:6px;align-items:center}.botctl input[type=color]{width:42px;height:26px;padding:0;border:1px solid var(--line)}.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;padding:7px 14px;border-radius:8px;background:var(--work,#2e9d5b);color:#fff;font-weight:600;font-size:13px;box-shadow:0 6px 18px rgba(0,0,0,.3)}.toast.bad{background:var(--wait,#c0392b)}.toast[hidden]{display:none}
+.tokhead{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:4px}.toktotal{font-size:13px;margin-bottom:6px}.tokrow{display:grid;grid-template-columns:minmax(0,11em) 1fr 4.6em;gap:6px;align-items:center;padding:2px 0}.tokrow .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tokrow .v{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}.tokbar{height:6px;border-radius:3px;background:color-mix(in srgb,var(--line) 60%,transparent);overflow:hidden}.tokbar i{display:block;height:100%;background:var(--btn)}.tokrow.unk .v{grid-column:2/4;color:var(--muted)}.toknote{margin:8px 0 0;font-size:11px}
+.hgrp .ic svg{width:16px;height:16px;vertical-align:-3px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}header.hn .hgrp .lg{display:none}header.hn .hgrp .sm{display:inline}header.hn .hgrp button.sec{padding:0 8px;min-width:34px}header.hx #sparkbtn{white-space:normal;height:auto;min-height:32px;line-height:1.25;padding:5px 10px;max-width:100%;text-align:center;overflow-wrap:anywhere}header.hx .hgrp{width:100%}header.hw{flex-wrap:wrap}header.hw .hgrp{flex-wrap:wrap;margin-left:0;justify-content:flex-start}   /* set by fitHeader(): short labels, then a second row, only when the row does not fit */
 </style></head><body>
-<header><h1>Rebel Bot Swarm</h1><button id="startchip" type="button" aria-expanded="false" aria-controls="welcome">Start here &#9662;</button><span class="slot" id="slot" hidden></span><span class="muted" id="upd"></span><span class="hgrp" role="group" aria-label="Team actions"><button id="sparkbtn" class="main" type="button" title="Open a new Claude Code chat with your team leader">&#9889; Spark</button><button id="savebtn" class="sec" type="button" title="Save your members, pictures, brains and settings to one .zip file">Save team...</button><button id="restbtn" class="sec" type="button" title="Restore a team from a Save team .zip file or folder">Restore team...</button><button id="addbtn" class="main" type="button">+ Add team member</button></span><section class="welcome" id="welcome" hidden aria-label="Start here"><h2>Start here</h2><label for="leadname"><b>Name your team leader</b> (Spark opens a new chat as this leader)</label><div class="lrow"><input id="leadname" maxlength="40" placeholder="Coordinator"><button id="leadsave" type="button">Save</button><span id="leadmsg" class="muted" aria-live="polite"></span></div><ol><li><b>Open and close the dashboard</b>: click <b>Swarm</b> in the status bar (bottom left), the <b>Rebel Bot Swarm</b> icon in the activity bar (left edge), or press <b>Ctrl+Alt+S</b>. You are here now.</li><li><b>Press Spark</b> to start work: a new Claude Code chat opens with the starter prompt. Press Enter, then say what you want to do.</li><li><b>Close chat tabs when the job is handed over</b>: the dashboard keeps watching your team.</li><li><b>Save team</b> to keep your pictures, names and settings safe (also before you uninstall).</li></ol><div class="row"><button id="wspark" class="main" type="button">&#9889; Spark</button><button id="wsave" type="button">Save team...</button><button id="wdone" type="button">Got it, hide this</button></div></section></header>
+<header><h1>Rebel Bot Swarm</h1><span class="viewchip" id="viewchip" hidden></span><button id="startchip" type="button" aria-expanded="false" aria-controls="welcome">Start here &#9662;</button><span class="slot" id="slot" hidden></span><span class="muted" id="upd"></span><span class="hgrp" role="group" aria-label="Team actions"><button id="sparkbtn" class="main" type="button" title="Open a new Claude Code chat with your team leader">OPEN</button><button id="tokbtn" class="sec" type="button" title="Token use today, per member and for the team" aria-expanded="false" aria-controls="tokpop" aria-label="Tokens"><span class="lg">Tokens</span><span class="sm ic" aria-hidden="true"><svg viewBox="0 0 16 16" focusable="false"><path d="M3 13.5V8.5M8 13.5V3M13 13.5V6.5"/></svg></span></button><button id="savebtn" class="sec" type="button" title="Save team: your members, pictures, brains and settings in one .zip file" aria-label="Save team"><span class="lg">Save team...</span><span class="sm ic" aria-hidden="true"><svg viewBox="0 0 16 16" focusable="false"><path d="M8 2v8M4.5 6.5 8 10l3.5-3.5M2.5 13.5h11"/></svg></span></button><button id="restbtn" class="sec" type="button" title="Restore team: from a Save team .zip file or folder" aria-label="Restore team"><span class="lg">Restore team...</span><span class="sm ic" aria-hidden="true"><svg viewBox="0 0 16 16" focusable="false"><path d="M8 10.5V2.5M4.5 6 8 2.5 11.5 6M2.5 13.5h11"/></svg></span></button><button id="newteambtn" class="sec" type="button" title="Create team: a new named team inside your swarm, with its members and its leader" aria-label="Create team"><span class="lg">Create team...</span><span class="sm ic" aria-hidden="true"><svg viewBox="0 0 16 16" focusable="false"><circle cx="5" cy="6" r="2"/><circle cx="10" cy="6" r="2"/><path d="M1.5 13c0-2 1.6-3.4 3.5-3.4S8.5 11 8.5 13M7.5 13c0-2 1.2-3.4 3-3.4s3 1.4 3 3.4"/></svg></span></button><button id="teambtn" class="sec" type="button" title="Choose which team this window shows" hidden>Team: Whole swarm &#9662;</button><button id="addbtn" class="sec add" type="button" title="Add team member: a new member card" aria-label="Add team member"><span class="lg">+ Add team member</span><span class="sm ic" aria-hidden="true"><svg viewBox="0 0 16 16" focusable="false"><circle cx="6" cy="5.5" r="2.5"/><path d="M1.5 13.5c0-2.6 2-4.2 4.5-4.2s4.5 1.6 4.5 4.2M13 5.5v5M10.5 8h5"/></svg></span></button></span><div id="toast" class="toast" role="status" aria-live="polite" hidden></div><section class="tokpop" id="tokpop" hidden aria-label="Token use today"><div class="tokhead"><b>Tokens today</b><span class="muted" id="toksince"></span></div><div id="toktotal" class="toktotal"></div><div id="tokrows" class="tokrows"></div><p class="muted toknote">From the usage Claude Code records in each chat's transcript: the member's open chat and its helpers, since midnight. Includes cache reads, which cost much less than new input. Hover a row for the split.</p></section><section class="welcome" id="welcome" hidden aria-label="Start here"><h2>Start here</h2><label for="leadname"><b>Name your team leader</b> (the OPEN button opens a new chat as this leader)</label><div class="lrow"><input id="leadname" maxlength="40" placeholder="Coordinator"><button id="leadsave" type="button">Save</button><span id="leadmsg" class="muted" aria-live="polite"></span></div><ol><li><b>Open and close the dashboard</b>: click <b>Swarm</b> in the status bar (bottom left), the <b>Rebel Bot Swarm</b> icon in the activity bar (left edge), or press <b>Ctrl+Alt+S</b>. You are here now.</li><li><b>Press OPEN</b> (it shows your leader's name) to start work: a new Claude Code chat opens with the starter prompt. Press Enter, then say what you want to do.</li><li><b>Close chat tabs when the job is handed over</b>: the dashboard keeps watching your team.</li><li><b>Save team</b> to keep your pictures, names and settings safe (also before you uninstall).</li></ol><div class="row"><button id="wspark" class="main" type="button">OPEN</button><button id="wsave" type="button">Save team...</button><button id="wdone" type="button">Got it, hide this</button></div></section></header>
 
 <div class="stats" id="stats" aria-label="Summary"></div>
 <main>
@@ -120,9 +140,11 @@ header .slot{flex:1 1 0;min-width:0;overflow:hidden;white-space:nowrap;text-over
   <section class="panel"><h2>Board log</h2><div class="ww" id="blog"></div></section>
  </aside>
 </main>
-<dialog id="dlg"><div class="dlgbar"><b id="dlgtitle"></b><button form="edform" class="main edsave" type="submit">Save</button><button class="dlgx" type="button">Close</button></div><div id="dlgbody"></div>
- <form id="edform" autocomplete="off"><h4>Edit this member</h4>
+<dialog id="dlg"><div class="dlgbar"><b id="dlgtitle"></b><span id="edmsg" aria-live="polite"></span><button form="edform" id="edsend" class="main edsave" type="submit">Save</button><button class="dlgx" type="button">Close</button></div><div id="dlgbody"></div>
+ <form id="edform" autocomplete="off"><div id="edorph" class="orph" hidden></div><h4>Edit this member</h4>
   <label for="edname">Name on the panel (max 60 characters; empty = the session or board name)</label><input id="edname" maxlength="60">
+  <div class="tr2"><div><label for="edteam">Team</label><select id="edteam"></select></div><div><label for="edroles">Role</label><select id="edroles"></select></div></div>
+  <div class="muted" id="edteamhint"></div>
   <label id="avlbl">Avatar (our own drawings, or your own pictures)</label>
   <div class="avsel"><button type="button" id="avbtn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="avlbl avlabel"><span id="avcur"></span><span id="avlabel"></span><span aria-hidden="true">&#9662;</span></button>
   <div class="pick" id="edpick" role="listbox" aria-labelledby="avlbl" hidden></div></div>
@@ -138,7 +160,20 @@ header .slot{flex:1 1 0;min-width:0;overflow:hidden;white-space:nowrap;text-over
   <p><button type="button" id="dgsend">Save digest request</button> <span id="dgmsg"></span></p>
   <p class="muted" style="font-size:11px">Name and avatar change this panel only. Task and role instructions are saved as one request file
   for your coordinator session (<a class="lnk" data-open="1">open the requests folder</a>). The panel never edits the agent files.</p>
-  <p id="edmsg"></p><p><button id="edsend" class="main edsave" type="submit">Save</button> <button class="dlgx" type="button">Close</button></p></form></dialog>
+  </form></dialog>
+<dialog id="botdlg" aria-labelledby="bottitle"><div class="botwrap"><h3 id="bottitle">Botify: make an avatar from a picture</h3>
+<p class="muted" id="botstep">Paste a picture (Ctrl+V), drop one here, or choose a file. It stays on this computer: only the drawing is saved.</p>
+<div class="botcols"><div><div id="botdrop" class="botdrop" tabindex="0" aria-label="Paste or drop a picture here"><canvas id="botcv" width="300" height="300"></canvas><span id="botempty">Paste or drop a picture</span></div>
+<div class="botrow"><input type="file" id="botfile" accept="image/png,image/jpeg,image/webp" aria-label="Choose a picture"><label>Circle size <input type="range" id="botsize" min="10" max="60" value="30"></label></div>
+<p class="muted botsmall">Drag the circle onto the face (or use the arrow keys on the picture), then press Botify.</p></div>
+<div class="botright"><div id="botprev" class="botprev" aria-live="polite"></div>
+<div class="botctl" id="botctl" hidden><label>Skin <input type="color" id="botskin"></label><label>Hair <input type="color" id="bothair"></label>
+<label>Hair style <select id="boths"><option value="crop">Short</option><option value="part">Parted</option><option value="spiky">Spiky</option><option value="curls">Curly</option><option value="long">Long</option><option value="buns">Side buns</option><option value="">None</option></select></label>
+<label>Beard <select id="botbeard"><option value="">None</option><option value="short">Short</option><option value="full">Full</option><option value="tache">Moustache</option></select></label>
+<label>Eyes <select id="boteye"><option value="0">Brown</option><option value="1">Blue</option><option value="2">Green</option><option value="3">Grey</option></select></label>
+<label><input type="checkbox" id="botglass"> Glasses</label></div></div></div>
+<p id="botmsg" class="muted" aria-live="polite"></p>
+<div class="row"><button id="botgo" class="main" type="button" disabled>Botify</button><button id="botsave" class="main" type="button" disabled>Save as new avatar</button><button id="botcancel" type="button">Cancel</button></div></div></dialog>
 <dialog id="nmdlg"><form id="nmform" method="dialog"><h3>Add team member</h3>
  <p class="muted">This saves one request file for your coordinator session to pick up (<a class="lnk" data-open="1">open the requests folder</a>).</p>
  <label for="nmname">Name (max 60 characters)</label><input id="nmname" maxlength="60" required autocomplete="off">
@@ -204,11 +239,11 @@ function suit(C,neck){const B="M12 100 C12 81 27 71.5 50 71.5 C73 71.5 88 81 88 
   `<rect x="41" y="83" width="18" height="10" rx="2.5" fill="${OL}" stroke="${C.acc}" stroke-width="1.4"/><circle cx="45.5" cy="88" r="1.7" fill="#ff5d73"/><circle cx="50" cy="88" r="1.7" fill="#ffd166"/><circle cx="54.5" cy="88" r="1.7" fill="${HOLO}"/>`}
 // heads: space crew (human) and two alien species of our own design
 const HEADS={
- human:(C,st,h,role)=>{const hc=HAIRCOL[(h>>>3)%HAIRCOL.length],hv=HAIRS[role==="fitter"?5:(h>>>5)%HAIRS.length](hc),sk=SKIN[h%SKIN.length],skD=shade(sk,-.09);
+ human:(C,st,h,role,bo)=>{const hc=bo?bo.hair:HAIRCOL[(h>>>3)%HAIRCOL.length],hv=bo&&bo.hs<0?{back:"",front:""}:HAIRS[bo?bo.hs:role==="fitter"?5:(h>>>5)%HAIRS.length](hc),sk=bo?bo.skin:SKIN[h%SKIN.length],skD=shade(sk,-.09);
   return {neck:skD,back:hv.back,head:`<circle cx="32" cy="47" r="4.2" fill="${sk}" ${S(2)}/><circle cx="68" cy="47" r="4.2" fill="${skD}" ${S(2)}/>`+
    `<ellipse cx="50" cy="45" rx="18" ry="19" fill="${sk}"/><path d="M57 27.5 C71 33 72 57 55 63.5 C64 53 65 38 57 27.5Z" fill="${skD}"/><ellipse cx="50" cy="45" rx="18" ry="19" fill="none" ${S(2.6)}/>`+
    `<ellipse cx="39.5" cy="52.5" rx="3.6" ry="2.2" fill="#ff6b6b" opacity=".3"/><ellipse cx="60.5" cy="52.5" rx="3.6" ry="2.2" fill="#ff6b6b" opacity=".3"/>`+
-   hv.front+brows(st,shade(hc,-.12))+eyes(st,h)+mouth(st)}},
+   hv.front+brows(st,shade(hc,-.12))+eyes(st,bo?bo.eye:h)+(bo?botExtras(bo):"")+mouth(st)}},
  // tall smooth dome, lavender, three eyes, no ears
  dome:(C,st,h)=>{const sk="#b9a3ee",skD="#9479d6",P="M32 50 C30 24 38 13 50 13 C62 13 70 24 68 50 C67 60 60 65 50 65 C40 65 33 60 32 50Z";
   return {neck:skD,back:"",head:`<path d="${P}" fill="${sk}"/><path d="M58 15 C70 24 70 52 60 63 C64 50 64 30 58 15Z" fill="${skD}"/><g fill="${skD}"><circle cx="42" cy="23" r="2.2"/><circle cx="47" cy="18.5" r="1.5"/><circle cx="55" cy="21" r="1.8"/></g><path d="${P}" fill="none" ${S(2.6)}/>`+
@@ -352,8 +387,9 @@ function avatar(m){const role=m.style||roleOf(m.name,m.job),h=hash(m.name),k="a"
  if(m.pic)inner=`<circle cx="50" cy="50" r="46" fill="#0d1530"/><image href="${esc(m.pic)}" x="4" y="4" width="92" height="92" preserveAspectRatio="xMidYMid slice"/>`;
  else if(isRebel(role))inner=rebelInner(role);
  else if(BOTS[role]){const r=BOTS[role](st,C);inner=space(C,h)+r.in;front=r.front}
- else{const hd=HEADS[HEAD_OF[role]||"human"](C,st,h,role),p=ROLE_ART[role](C);
+ else{const hd=HEADS[HEAD_OF[role]||"human"](C,st,h,role,m.bot),p=ROLE_ART[role](C);
   inner=space(C,h)+hd.back+suit(C,hd.neck)+(p.pre||"")+hd.head+(p.top||"");front=p.front||""}
+ if(m.bare)return `<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 100 100">${defs}<g clip-path="url(#cl${k})">${inner}</g></svg>`;   // 0.5.1 Botify: the picture alone, for the avatar file
  return `<svg class="av ${st==="working"?"working":""}" width="76" height="76" viewBox="0 0 100 100" role="img" aria-label="${esc(m.display||m.name)}: ${esc(st)}">${defs}<g clip-path="url(#cl${k})">${inner}</g>`+
   `<circle cx="50" cy="50" r="44.3" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="1"/><circle cx="50" cy="50" r="46.5" fill="none" style="stroke:${ring}" stroke-width="4.2"/>${front}${overlay(st)}</svg>`}
 let last={};
@@ -373,7 +409,7 @@ function pickRender(){const m=edM,base={name:m.name,job:m.job,colour:m.colour,st
  const crew=st.filter(isRebel).map(k=>["style:"+k,sl(k)+" (Rebel crew)",avatar({...base,style:k,pic:""})]);
  const pics=(last.pics||[]).map(p=>["pic:"+p.file,"Picture: "+p.file,avatar({...base,style:"",pic:p.url})]);
  edpick.innerHTML=grp("Space crew drawings")+drawn.map(btn).join("")+(crew.length?grp("Rebel crew")+crew.map(btn).join(""):"")+
-  grp("Your pictures")+pics.map(btn).join("")+`<button type="button" class="up" id="upbtn" tabindex="-1" data-up="1">Upload picture…</button>`}
+  grp("Your pictures")+pics.map(btn).join("")+`<button type="button" class="up" id="upbtn" tabindex="-1" data-up="1">Upload picture…</button><button type="button" class="up" id="botbtn" tabindex="-1" data-bot="1" title="Botify: make a cartoon avatar from a photo or screen grab">Create…</button>`}
 const opts=()=>[...edpick.querySelectorAll("button")];
 function pickOpen(on){edpick.hidden=!on;avbtn.setAttribute("aria-expanded",String(on));if(on){const o=opts(),i=Math.max(0,o.findIndex(b=>b.classList.contains("sel")));o[i]&&o[i].focus()}}
 avbtn.addEventListener("click",()=>pickOpen(edpick.hidden));
@@ -383,25 +419,37 @@ edpick.addEventListener("keydown",e=>{const o=opts(),i=o.indexOf(document.active
  const step={ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1}[e.key];
  if(step){e.preventDefault();o[(i+step+o.length)%o.length].focus()}else if(e.key==="Home"){e.preventDefault();o[0].focus()}else if(e.key==="End"){e.preventDefault();o[o.length-1].focus()}});
 edpick.addEventListener("focusout",e=>{if(!edpick.hidden&&!e.currentTarget.contains(e.relatedTarget)&&e.relatedTarget!==avbtn)pickOpen(false)});
-edpick.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+edpick.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.bot){pickOpen(false);botOpen();return}
  if(b.dataset.up){if(VS)VS.postMessage({type:"uploadPic",member:edM.id});edDone(false,"Choose a .png, .jpg or .webp picture (max 2 MB)…");return}
  edAv=b.dataset.v;pickRender();pickOpen(false);avbtn.focus();edsends(false);edmsg.textContent=""});
 function edsends(dis){for(const b of document.querySelectorAll(".edsave"))b.disabled=dis}
-function edDone(ok,msg){edmsg.textContent=msg;edmsg.style.color=ok?"var(--work)":"var(--wait)";edsends(ok)}
+function edDone(ok,msg){edmsg.textContent=msg;edmsg.style.color=ok?"var(--work)":"var(--wait)";edsends(ok);
+ if(ok&&edSaving){edSaving=false;dlg.close();toast("Saved: "+(edname.value.trim()||(edM&&edM.name)||"member"))}else if(!ok)edSaving=false}   // 0.5.1: close only once the save has landed; an error keeps the pop-out open
+let edSaving=false,toastT=0;
+function toast(t,bad){const el=document.getElementById("toast");el.textContent=t;el.classList.toggle("bad",!!bad);el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{el.hidden=true},2600)}
 edform.addEventListener("input",e=>{if(e.target===dgsrc||e.target===dgnote){dgmsg.textContent="";dgsend.disabled=false;return}edsends(false);edmsg.textContent=""});
 function roleIn(d){if(!edM||d.id!==edM.id)return;edrole.disabled=false;
  if(d.found&&!d.too_long){edrole.value=d.body;edinfo.textContent="Filled from the agent file "+(d.agent||"")+" (agent files are only read here)."}
  else if(d.too_long){edrole.value="";edinfo.textContent="The agent file is longer than "+d.limit+" characters, so the box is empty: write only the change you want."}
  else{edrole.value="";edinfo.textContent="No agent file for this member: write the role here if you want one."}}
 edform.addEventListener("submit",e=>{e.preventDefault();if(!edM)return;
- const data={member:edM.id,name:edname.value.trim(),avatar:edAv,task:edtask.value.trim(),role_instructions:edrole.value};
+ const data={member:edM.id,name:edname.value.trim(),avatar:edAv,task:edtask.value.trim(),role_instructions:edrole.value,rev:edM.rev||""};
+ if(!edM.leader){data.team=edteam.value;data.role=edroles.value}
  if(data.name.length>60||data.task.length>300||data.role_instructions.length>6000){edDone(false,"Too long: name max 60, task max 300, role instructions max 6000 characters.");return}
- edsends(true);edmsg.textContent="Saving…";edmsg.style.color="";
+ edsends(true);edSaving=true;edmsg.textContent="Saving…";edmsg.style.color="";
  if(VS)VS.postMessage({type:"editMember",...data});else edDone(false,"Open this page from VS Code.")});
 document.addEventListener("click",e=>{if(e.target.closest("a[data-open]")&&VS)VS.postMessage({type:"openRequests"})});
+// TEAMS: the team and role boxes of the edit panel. The swarm leader is above all teams (boxes off).
+const edteam=document.getElementById("edteam"),edroles=document.getElementById("edroles"),edteamhint=document.getElementById("edteamhint");
+function teamFields(m){const ts=last.allTeams||[],rs=last.roles||["Team leader","Member"];
+ edteam.innerHTML=`<option value="">(no team)</option>`+ts.map(t=>`<option value="${esc(t)}">${(last.teamParents||{})[t]?esc(last.teamParents[t])+" &#8250; ":""}${esc(t)}</option>`).join("");
+ edroles.innerHTML=`<option value="">(none)</option>`+rs.map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join("");
+ edteam.value=m.team||"";edroles.value=m.role||"";const off=!!m.leader;edteam.disabled=off;edroles.disabled=off;
+ edteamhint.textContent=off?"Swarm leader: above all teams.":ts.length?(m.teamLead?"Team leader of "+m.team+" (named in the teams setting).":""):"No teams yet: press Create team... at the top."}
 function show(i){const m=last.members[i];if(!m)return;
- edM=m;edAv=m.avatar||"auto";edname.value=m.display||"";edtask.value="";edmsg.textContent="";edsends(false);edform.hidden=!m.id;pickRender();pickOpen(false);
+ edM=m;edAv=m.avatar||"auto";edname.value=m.display||"";edtask.value="";edmsg.textContent="";edsends(false);edform.hidden=!m.id;pickRender();pickOpen(false);orphRender();
  dlgtitle.textContent=m.display||m.name;for(const b of document.querySelectorAll(".edsave"))b.hidden=!m.id;
+ teamFields(m);
  brinfo.textContent="Reading…";brtext.hidden=true;bropen.hidden=true;brmake.hidden=true;brmsg.textContent="";dgsrc.value="";dgnote.value="";dgfile.textContent="";dgmsg.textContent="";dgsend.disabled=false;
  if(VS&&m.id)VS.postMessage({type:"getBrain",id:m.id});
  edrole.value="";edrole.disabled=true;edinfo.textContent="Reading the agent file…";if(VS&&m.id)VS.postMessage({type:"getRole",id:m.id});
@@ -409,16 +457,27 @@ function show(i){const m=last.members[i];if(!m)return;
  (m.status==="ready"?`<p><b>Ready.</b> Idle and available: the coordinator starts it as a background helper when a job needs it.</p>`:"")+(m.status==="closed"?`<p><b>${CLOSED_HINT}.</b> A closed tab ends the session: no member can reach it until it is reopened.</p>`:"")+`<p>${esc(m.job)}</p>`+
  (m.sid?`<p><b>To open this session:</b> in VS Code, open the Claude Code panel, then its past conversations list, and pick "${esc(m.name)}".<br>
  Or in a terminal: <code>claude --resume ${esc(m.sid)}</code></p>`:`<p>To reopen: in the Claude Code panel, open the past conversations list and pick "${esc(m.name)}" by its title.</p>`)+
- (m.files.length?`<p><b>Files booked:</b><br>${m.files.map(esc).join("<br>")}</p>`:"");dlg.showModal()}
-cards.addEventListener("click",e=>{const c=e.target.closest(".card");if(c)show(+c.dataset.i)});
+ (m.team?`<p>Team: <b>${esc(m.team)}</b>${m.role?" · "+esc(m.role):""}</p>`:"")+(m.slot?`<p><b>Holds the shared slot.</b></p>`:"")+
+ (m.files.length?`<p><b>Files booked (${m.files.length} file group${m.files.length===1?"":"s"}):</b><br>${m.files.map(esc).join("<br>")}</p>`:"")+condBtn(m);dlg.showModal()}
+dlgbody.addEventListener("click",e=>{const b=e.target.closest("button.cond");if(b&&!b.disabled&&VS){dlg.close();VS.postMessage({type:"condense",id:b.dataset.id})}});
+// CONDENSE: one button per card with an open chat; enabled only when safe (idle, nothing waiting, job not running);
+// highlighted with a badge when the chat is large or the job is done. The extension asks Condense or Restart.
+function condBtn(m){if(!m.sid)return"";const k=m.ctx?Math.round(m.ctx/1000)+"k":"";
+ return `<div class="cact"><button type="button" class="cond${m.condenseNow?" now":""}" data-id="${esc(m.id||"")}"${m.canCondense?"":" disabled"} title="${esc(m.condenseWhy||"")}">${m.condenseNow?"&#9888; ":""}Condense &#9662;</button>${k?`<span class="ctx${m.condenseNow?" big":""}" title="Context of this chat now (tokens)">${k}</span>`:""}</div>`}
+cards.addEventListener("click",e=>{const b=e.target.closest("button.cond");if(b){e.stopPropagation();if(!b.disabled&&VS)VS.postMessage({type:"condense",id:b.dataset.id});return}const c=e.target.closest(".card");if(c)show(+c.dataset.i)});
 for(const b of document.querySelectorAll(".dlgx"))b.addEventListener("click",()=>dlg.close());
 // BRAIN: the member's own Markdown notes (Claude Code's subagent memory if there is one, else the panel's brains folder)
 function brainIn(d){if(!edM||d.id!==edM.id)return;
- if(!d.found){brinfo.textContent="No brain file for this member.";return}
- const where=d.kind==="native"?"Claude Code memory ("+d.scope+" scope)":"Brain file in the brains folder";
- if(d.private){brinfo.textContent=where+": private member, so no preview here.";bropen.hidden=!d.exists;return}
- if(!d.exists){brinfo.textContent=where+": not made yet ("+d.file+")."+(d.kind==="panel"?" Tip: add \"memory: user\" to the agent file and Claude Code keeps the member's own MEMORY.md.":"");brmake.hidden=d.kind!=="panel";return}
- brinfo.textContent=where+": "+d.file;brtext.textContent=d.text||"(empty)";brtext.hidden=false;bropen.hidden=false}
+ if(!d.found){brinfo.textContent="No brain file for this member.";brfold.hidden=true;return}
+ // 0.5.1 (Simon, 21 Nov): the line is just the link "Brain Folder"; the tooltip has the full path; a click opens the
+ // folder in Explorer (and makes it, with an empty MEMORY.md, when it is not there yet)
+ const dir=String(d.file||"").replace(/[\\/][^\\/]*$/,""),fn=String(d.file||"").split(/[\\/]/).pop();
+ brinfo.textContent="";brmake.hidden=true;
+ brfold.textContent="Brain Folder";brfold.title=dir+(d.exists?"":" (not made yet: a click makes it with an empty "+fn+" and opens it)");brfold.hidden=false;
+ if(d.private||!d.exists){bropen.hidden=!d.exists;return}
+ brtext.textContent=d.text||"(empty)";brtext.hidden=false;bropen.hidden=false}
+const brfold=document.createElement("a");brfold.className="lnk brfold";brfold.href="#";brfold.hidden=true;brinfo.insertAdjacentElement("afterend",brfold);
+brfold.addEventListener("click",e=>{e.preventDefault();if(VS&&edM)VS.postMessage({type:"openBrainFolder",id:edM.id})});
 bropen.addEventListener("click",e=>{e.preventDefault();if(VS&&edM)VS.postMessage({type:"openBrain",id:edM.id})});
 brmake.addEventListener("click",()=>{if(VS&&edM)VS.postMessage({type:"createBrain",id:edM.id})});
 // DIGEST: one request file for the coordinator (text, link and/or a copied file)
@@ -441,7 +500,12 @@ function goTile(el){const id=el&&el.dataset.go,tg=id&&document.getElementById(id
 stats.addEventListener("click",e=>goTile(e.target.closest(".tile")));
 stats.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.classList.contains("tile")){e.preventDefault();goTile(e.target)}});
 let startSet=false;function startShow(open){welcomeEl.hidden=!open;startchip.setAttribute("aria-expanded",open?"true":"false")}
-function render(s){last=s;if(!startSet){startSet=true;startShow(!!s.startOpen)}const ln=String(s.leaderName||"Coordinator");sparkbtn.textContent="⚡ Spark "+ln;wspark.textContent="⚡ Spark "+ln;if(document.activeElement!==leadname)leadname.value=ln;const byId={};for(const m of s.members)if(m.id)byId[m.id]=m;
+function render(s){last=s;if(!startSet){startSet=true;startShow(!!s.startOpen)}const ln=String(s.leaderName||"Coordinator"),sn=String(s.sparkName||ln);const on=String(s.openName||sn).replace(/\s+/g," ").trim()||sn,onU=on.toUpperCase(),onF=onU.split(" ")[0];   // 0.5.1: OPEN + the name on the leader's card
+ sparkbtn.textContent="OPEN "+onU;   // always the full name on the leader's card, never cut
+sparkbtn.title="Open a new Claude Code chat with "+on;sparkbtn.setAttribute("aria-label","Open "+on);wspark.textContent="OPEN "+onU;requestAnimationFrame(fitHeader);
+ const tb=document.getElementById("teambtn");tb.hidden=!(s.allTeams&&s.allTeams.length);const tl="Team: "+(s.view||"Whole swarm");tb.innerHTML=`<span class="lg">${esc(tl)} ▾</span><span class="sm ic" aria-hidden="true"><svg viewBox="0 0 16 16" focusable="false"><circle cx="5" cy="6" r="2"/><circle cx="10.5" cy="6" r="2"/><path d="M1.5 13c0-2 1.6-3.4 3.5-3.4S8.5 11 8.5 13M8 13c0-2 1-3.4 2.5-3.4S13 11 13 13"/></svg>▾</span>`;tb.setAttribute("aria-label",tl+" (choose the team this window shows)");
+ const vc=document.getElementById("viewchip");vc.hidden=!s.view&&!s.viewMissing;vc.classList.toggle("bad",!!s.viewMissing);
+ vc.textContent=s.view?"Team: "+s.view:s.viewMissing?"Team "+s.viewMissing+" not found: whole swarm":"";vc.title=s.view?"This window shows one team (workspace setting rebelBotSwarm.team)":"Check rebelBotSwarm.teams and rebelBotSwarm.team";if(document.activeElement!==leadname)leadname.value=ln;const byId={};for(const m of s.members)if(m.id)byId[m.id]=m;
  const cnt=st=>s.members.filter(m=>st.includes(m.status)).length,today=new Date().toDateString(),isToday=f=>f.ts&&new Date(f.ts).toDateString()===today;
  const hold=(s.holder||"").replace(/\*/g,"").trim();
  const waitTip=(s.waiting||[]).length+" open item(s) on the board"+(cnt(["waiting for you"])?"; "+cnt(["waiting for you"])+" session(s) wait for an answer (see the cards)":"");
@@ -453,11 +517,13 @@ function render(s){last=s;if(!startSet){startSet=true;startShow(!!s.startOpen)}c
  const order={"working":0,"waiting for you":1,"idle":2,"ready":2,"closed":3};
  const idx=s.members.map((m,i)=>i).sort((a,b)=>(order[s.members[a].status]??4)-(order[s.members[b].status]??4));
  idx.sort((a,b)=>(s.members[b].leader?1:0)-(s.members[a].leader?1:0));
- const ch=idx.map(i=>{const m=s.members[i],cl=m.status==="closed",gr=cl||m.status==="ready"||m.status==="idle";return `<div class="card ${gr?"grey":""}${m.leader?" lead":""}" data-i="${i}" data-id="${esc(m.id||"")}" title="${esc((m.display||m.name)+(m.extra?": "+m.extra:""))}">${avatar(m)}
+ const TC={};for(const t of s.teams||[])if(/^#[0-9a-f]{6}$/i.test(t.color||""))TC[t.name]=t.color;
+ // 0.5.1 SMALL CARD: picture, name, status and the role / TEAM LEAD tag only; the job, hints, slot, files booked and
+ // Condense are in the expanded view (click the card). A team card carries its team colour as a stripe.
+ const cardH=i=>{const m=s.members[i],cl=m.status==="closed",gr=cl||m.status==="ready"||m.status==="idle",tc=m.team&&TC[m.team];return `<div class="card ${gr?"grey":""}${m.leader?" lead":""}${tc?" tm":""}"${tc?` style="--tc:${tc}"`:""} data-i="${i}" data-team="${esc(m.team||"")}" data-tl="${m.teamLead?1:""}" data-id="${esc(m.id||"")}" title="${esc((m.display||m.name)+(m.extra?": "+m.extra:""))}">${avatar(m)}
   <div><div class="name">${esc(m.display||m.name)}</div><div class="status" style="color:${gr?"var(--idle)":COL[m.status]||"var(--idle)"}">${esc(m.status)}${m.since?" · "+esc(m.since.replace(/^\d+ \w+ /,"")):""}</div>
-  ${cl?`<div class="hint" title="${CLOSED_HINT}">closed: reopen to send work</div>`:""}
-  ${m.leader?'<span class="tag lead" title="Team leader">&#9733; LEAD</span>':""}${m.slot?'<span class="tag">holds the shared slot</span>':""}${m.files.length?`<span class="tag">${m.files.length} file group(s) booked</span>`:""}
-  <div class="job">${esc(m.job)}</div></div></div>`}).join("");
+  ${m.leader?'<span class="tag lead" title="Swarm leader">&#9733; LEAD</span>':""}${m.teamLead?`<span class="tag tlead" title="Leader of team ${esc(m.team)}">TEAM LEAD</span>`:m.role&&!m.leader?`<span class="tag">${esc(m.role)}</span>`:""}</div></div>`};
+ const ch=groupCards(s,idx,cardH);
  if(ch!==cards._h){cards.innerHTML=ch;cards._h=ch}   // same cards: keep the animations running
  wait.innerHTML=s.waiting.map((w,k)=>`<li><button type="button" class="decide" data-k="${k}" title="Ask your leader to decide this item (in the leader's own chat)">Decide &#9656;</button><span class="wt">${esc(w.slice(0,260))}${w.length>260?"…":""}</span></li>`).join("")||"<li class='muted'>Nothing listed</li>";
  feed.innerHTML=s.feed.map(f=>`<div class="msg"><div class="hd">${esc(f.time)} · <b>${esc(f.from)}</b> → <b>${esc(f.to)}</b>${f.kind&&f.kind!=="message"?`<span class="kind">${esc(f.kind)}</span>`:""}</div>${esc(f.text)}</div>`).join("")||"<div class='msg muted'>No messages yet</div>";
@@ -467,11 +533,43 @@ function render(s){last=s;if(!startSet){startSet=true;startShow(!!s.startOpen)}c
  setHtml(blog,(s.log||[]).map(x=>`<div class="row"><span class="t">${esc(x.date)}</span><div>${x.who?`<b>${esc(x.who)}</b>: `:""}${esc(x.text)}</div></div>`).join("")||`<div class='row muted'>${s.board?"No log lines on the board":"Set rebelBotSwarm.boardFile to show your board log"}</div>`);
  layoutNet();drawLinks()}
 function setHtml(el,h){if(el._h!==h){el.innerHTML=h;el._h=h}}
+// TEAMS (setting teams): the swarm leader first, then each team (its leader first), then "No team".
+const TCOL=["#e11d48","#2563eb","#16a34a","#d97706","#7c3aed","#0891b2","#db2777","#65a30d","#ea580c","#4f46e5","#0d9488","#9333ea"];
+const tcol=k=>TCOL[k%TCOL.length];
+function groupCards(s,idx,cardH){const ts=s.teams||[];if(!ts.length)return idx.map(cardH).join("");
+ const byId=new Map(s.members.map((m,i)=>[m.id,i])),used=new Set();let h="";
+ const lead=idx.filter(i=>s.members[i].leader);
+ if(lead.length){h+=`<div class="thead swarm"><b>Swarm leader</b><span class="muted">above all teams</span></div>`+lead.map(cardH).join("");lead.forEach(i=>used.add(i))}
+ ts.forEach((t,k)=>{const inT=new Set(t.ids.map(id=>byId.get(id)).filter(i=>i!==undefined&&!used.has(i)));
+  const ldr=t.leaderId?byId.get(t.leaderId):undefined,list=(ldr!==undefined&&inT.has(ldr)?[ldr]:[]).concat(idx.filter(i=>inT.has(i)&&i!==ldr));
+  list.forEach(i=>used.add(i));
+  h+=`<div class="thead${t.parent?" sub":""}" style="--tc:${/^#[0-9a-f]{6}$/i.test(t.color||"")?t.color:tcol(k)}">${t.parent?"&#8627; ":""}<b>${esc(t.name)}</b>${t.parent?`<span class="muted">part of ${esc(t.parent)}</span>`:""}${t.scope?`<span class="muted">${esc(t.scope)}</span>`:""}${t.leaderId?"":`<span class="muted">· no leader yet${t.leader?" ("+esc(t.leader)+" not found)":""}</span>`}<span class="tn">${list.length}</span></div>`+
+   (list.map(cardH).join("")||`<div class="tempty muted">No members yet: open a card and choose this team.</div>`)});
+ const rest=idx.filter(i=>!used.has(i));
+ if(rest.length)h+=`<div class="thead"><b>No team</b><span class="tn">${rest.length}</span></div>`+rest.map(cardH).join("");
+ return h}
 // COMMS LINES: a glowing line with a travelling pulse from the sender's avatar to the receiver's for each new
 // hand-over (brief, report, message), fading after about 15 s; recent links stay faint (network view).
 // No timers while idle: lines are drawn at each refresh; the pulse is a CSS/SVG animation that ends with the line.
 const seen=new Map(),ACTIVE_MS=15000,FAINT_MS=6*3600000,NEW_MS=180000;let firstState=true;
 function centre(id,box){const c=cards.querySelector(`.card[data-id="${CSS.escape(id)}"] svg.av`);if(!c)return null;const r=c.getBoundingClientRect();return [r.left+r.width/2-box.left,r.top+r.height/2-box.top]}
+// 0.5.1 network lines: each end sits at the left or right end of the member's name bar (Simon: "lines should lead to
+// the bar only"), leaves it sideways, and the route is the candidate curve that crosses the fewest avatars (ideally none).
+function barEnds(id,box){const c=cards.querySelector(`.card[data-id="${CSS.escape(id)}"] .name`);if(!c)return null;const r=c.getBoundingClientRect();if(!r.width)return null;
+ const y=r.bottom-1-box.top;return {l:[r.left-box.left-2,y],r:[r.right-box.left+2,y],x:r.left+r.width/2-box.left}}
+function faces(box){const f=[...cards.querySelectorAll(".card svg.av")].map(v=>{const r=v.getBoundingClientRect();return [r.left+r.width/2-box.left,r.top+r.height/2-box.top,r.width*.47]}).filter(f=>f[2]>0);
+ f.rects=[...cards.querySelectorAll(".card .name,.card .status")].map(e=>e.getBoundingClientRect()).filter(r=>r.width&&r.height).map(r=>[r.left-box.left-1,r.top-box.top-1,r.right-box.left+1,r.bottom-box.top+1]);return f}
+function bez(a,c1,c2,b,t){const u=1-t;return [u*u*u*a[0]+3*u*u*t*c1[0]+3*u*t*t*c2[0]+t*t*t*b[0],u*u*u*a[1]+3*u*u*t*c1[1]+3*u*t*t*c2[1]+t*t*t*b[1]]}
+function faceHits(a,c1,c2,b,fs){let n=0;const H=Math.hypot,N=Math.max(40,Math.ceil((H(c1[0]-a[0],c1[1]-a[1])+H(c2[0]-c1[0],c2[1]-c1[1])+H(b[0]-c2[0],b[1]-c2[1]))/4));   // a sample every 4px or less
+ for(let i=0;i<=N;i++){const [x,y]=bez(a,c1,c2,b,i/N);for(const f of fs)if(Math.hypot(x-f[0],y-f[1])<f[2]+2)n+=100;for(const r of fs.rects||[])if(x>r[0]&&x<r[2]&&y>r[1]&&y<r[3])n++}return n}   // a face costs 100, passing under a name or status 1
+function route(from,to,box,fs){const A=barEnds(from,box),B=barEnds(to,box);if(!A||!B)return null;
+ const ra=B.x>=A.x,ends=[[ra,!ra],[!ra,!ra],[ra,ra],[!ra,ra]];   // [line leaves A to the right?, arrives at B's right end?]: the natural pair first
+ let best=null,bn=1e9;
+ const tryRoute=(ar,br,k,o1,o2)=>{const a=ar?A.r:A.l,b=br?B.r:B.l,sa=ar?1:-1,sb=br?1:-1,kk=Math.max(18,Math.hypot(b[0]-a[0],b[1]-a[1])*k),
+   c1=[a[0]+sa*kk,a[1]+o1],c2=[b[0]+sb*kk,b[1]+o2],n=faceHits(a,c1,c2,b,fs)+(ar===ra&&br!==ra?0:1);if(n<bn){bn=n;best=[a,c1,c2,b]}};
+ for(const [ar,br] of ends){for(const k of [.35,.2,.55,.8,1.1])for(const o of [0,-1,1,-2,2,-3,3,-4,4,-6,6]){tryRoute(ar,br,k,o*34,o*34);if(bn<100)break}if(bn<100)break}
+ if(bn>=100)for(const [ar,br] of ends)for(const k of [.3,.6,1,1.5,2.2])for(let o1=-14;o1<=14&&bn>=100;o1+=2)for(let o2=-14;o2<=14&&bn>=100;o2+=2)tryRoute(ar,br,k,o1*30,o2*30);   // still over a face: bend each end on its own
+ const f=v=>v[0].toFixed(1)+" "+v[1].toFixed(1);return `M${f(best[0])} C${f(best[1])} ${f(best[2])} ${f(best[3])}`}
 function drawLinks(){const s=last,now=Date.now(),box=teamwrap.getBoundingClientRect();links.setAttribute("viewBox",`0 0 ${box.width} ${box.height}`);
  const skew=(s.now||now)-now;let h="";const faint=new Map(),active=[];
  for(const l of (s.links||[])){const k=l.from+">"+l.to+"@"+l.ts;
@@ -479,23 +577,57 @@ function drawLinks(){const s=last,now=Date.now(),box=teamwrap.getBoundingClientR
   const t0=seen.get(k);if(t0&&now-t0<ACTIVE_MS)active.push([l,t0]);
   const age=(s.now||now)-l.ts,pk=[l.from,l.to].sort().join("|");if(age<FAINT_MS&&(!faint.has(pk)||faint.get(pk)[1]>age))faint.set(pk,[l,age])}
  firstState=false;
+ // 0.5.1: lines belong to Network view only; card view clears the overlay (Simon, 21 Nov: lines stayed on the cards)
+ if(!netview.checked){if(links.innerHTML!==""){links.innerHTML=""}links._h="";return}
  const curve=(a,b)=>{const mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2,dx=b[0]-a[0],dy=b[1]-a[1],n=Math.hypot(dx,dy)||1,o=Math.min(60,n*.18);return `M${a[0].toFixed(1)} ${a[1].toFixed(1)} Q${(mx-dy/n*o).toFixed(1)} ${(my+dx/n*o).toFixed(1)} ${b[0].toFixed(1)} ${b[1].toFixed(1)}`};
- for(const [l,age] of faint.values()){const a=centre(l.from,box),b=centre(l.to,box);if(!a||!b)continue;
-  h+=`<path class="ln" d="${curve(a,b)}" stroke-width="1.4" stroke-opacity="${(.12+.38*(1-age/FAINT_MS)).toFixed(2)}"/>`}
- for(const [l,t0] of active){const a=centre(l.from,box),b=centre(l.to,box);if(!a||!b)continue;const d=curve(a,b),left=Math.max(1,(ACTIVE_MS-(now-t0))/1000);
+ const fs=faces(box);
+ if(netview.checked){const sw=(s.members||[]).find(m=>m.leader);   // team links: swarm leader -> team leaders -> members
+  (s.teams||[]).forEach((t,k)=>{const pt=t.parent&&(s.teams||[]).find(x=>x.name===t.parent),up=pt&&pt.leaderId?pt.leaderId:sw&&sw.id,c=/^#[0-9a-f]{6}$/i.test(t.color||"")?t.color:tcol(k);
+   const top=t.leaderId||up;if(t.leaderId&&up&&t.leaderId!==up){const d=route(up,t.leaderId,box,fs);if(d)h+=`<path class="tlink" stroke="${c}" stroke-width="2.4" d="${d}"/>`}
+   for(const id of t.ids){if(id===t.leaderId||!top||id===top)continue;const d=route(top,id,box,fs);if(d)h+=`<path class="tlink" stroke="${c}" d="${d}"/>`}})}
+ for(const [l,age] of faint.values()){const d=route(l.from,l.to,box,fs);if(!d)continue;
+  h+=`<path class="ln" d="${d}" stroke-width="1.4" stroke-opacity="${(.12+.38*(1-age/FAINT_MS)).toFixed(2)}"/>`}
+ for(const [l,t0] of active){const b=centre(l.to,box),d=route(l.from,l.to,box,fs);if(!b||!d)continue;const left=Math.max(1,(ACTIVE_MS-(now-t0))/1000);
   h+=`<path class="ln on dash" d="${d}"><animate attributeName="stroke-opacity" from="1" to="0.15" dur="${left.toFixed(1)}s" fill="freeze"/></path>`+
    `<circle class="node" cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" r="23"><animate attributeName="r" values="21;26;21" dur="1.2s" repeatCount="${Math.ceil(left/1.2)}"/></circle>`+
    `<circle class="pulse" r="3.5"><animateMotion dur="1.6s" repeatCount="${Math.ceil(left/1.6)}" path="${d}"/></circle>`}
  if(h!==links._h){links.innerHTML=h;links._h=h}}
 // NETWORK VIEW: the cards as nodes on a ring (the busiest in the middle ring), lines between them
-function layoutNet(){const on=netview.checked;cards.classList.toggle("net",on);const cs=[...cards.querySelectorAll(".card")];
+function placeNet(ex){const on=netview.checked;cards.classList.toggle("net",on);const cs=[...cards.querySelectorAll(".card")];
  if(!on){for(const c of cs){c.style.left="";c.style.top=""}return}
  const w=cards.clientWidth||600,n=cs.length,top=cards.getBoundingClientRect().top+window.scrollY,fit=window.innerHeight-top-22;   // fill the height that is left
- const H=Math.round(Math.max(300,Math.min(Math.max(fit,300),120+n*44)));cards.style.setProperty("--neth",H+"px");
+ const H=Math.round(Math.max(300,Math.min(Math.max(fit,300),120+n*44))*(1+ex));cards.style.setProperty("--neth",H+"px");
+ const ts=last.teams||[];
+ if(ts.length){   // teams: swarm leader in the middle, team leaders on an inner ring, each team's members together outside
+  // each group (team, then "no team") gets a slice of the circle: leader at the slice middle on the inner ring
+  const sw=cs.find(c=>c.classList.contains("lead")),gs=[];
+  for(const t of ts){const g=cs.filter(c=>c!==sw&&c.dataset.team===t.name),l=g.find(c=>c.dataset.tl);gs.push([l,g.filter(c=>c!==l)])}
+  gs.push([null,cs.filter(c=>c!==sw&&!c.dataset.team)]);
+  const live=gs.filter(([l,r])=>l||r.length),W=live.reduce((a,[,r])=>a+Math.max(1,r.length),0)||1,rx=Math.max(60,w/2-62),ry=Math.max(60,H/2-46);
+  const put=(c,a,f)=>{c.style.left=(w/2+rx*f*Math.cos(a))+"px";c.style.top=(H/2+ry*f*Math.sin(a))+"px"};
+  if(sw){sw.style.left=w/2+"px";sw.style.top=H/2+"px"}
+  let a0=-Math.PI/2-Math.PI*Math.max(1,(live[0]||[0,[]])[1].length)/W;
+  for(const [l,r] of live){const span=2*Math.PI*Math.max(1,r.length)/W;
+   r.forEach((c,j)=>put(c,a0+(j+.5)*span/r.length,1));if(l)put(l,a0+span/2,r.length?.52:.75);a0+=span}
+  return}
  const deg={};for(const l of (last.links||[])){deg[l.from]=(deg[l.from]||0)+1;deg[l.to]=(deg[l.to]||0)+1}
  const hub=cs.reduce((h,c)=>(deg[c.dataset.id]||0)>(h?deg[h.dataset.id]||0:0)?c:h,null),ring=cs.filter(c=>c!==hub);   // the busiest node in the middle
  if(hub){hub.style.left=w/2+"px";hub.style.top=H/2+"px"}
- const rx=Math.max(60,w/2-54),ry=Math.max(60,H/2-44);ring.forEach((c,i)=>{const a=-Math.PI/2+i*2*Math.PI/Math.max(1,ring.length);c.style.left=(w/2+rx*Math.cos(a))+"px";c.style.top=(H/2+ry*Math.sin(a))+"px"})}
+ const rx=Math.max(60,w/2-62),ry=Math.max(60,H/2-46);ring.forEach((c,i)=>{const a=-Math.PI/2+i*2*Math.PI/Math.max(1,ring.length);c.style.left=(w/2+rx*Math.cos(a))+"px";c.style.top=(H/2+ry*Math.sin(a))+"px"})}
+// 0.5.1: push overlapping nodes apart (each measured: picture, name, underline, status); the swarm leader stays put.
+// Returns true when no two nodes overlap. If they cannot fit, layoutNet makes the area taller and tries again.
+function relaxNet(){const W=cards.clientWidth,H=cards.clientHeight,g=8;
+ const b=[...cards.querySelectorAll(".card")].map(c=>{const r=c.getBoundingClientRect();return {c,x:parseFloat(c.style.left)||0,y:parseFloat(c.style.top)||0,w:r.width+g,h:r.height+g,fix:c.classList.contains("lead")}}).filter(o=>o.w>g&&o.h>g);
+ let bad=1;
+ for(let it=0;it<300&&bad;it++){bad=0;
+  for(let i=0;i<b.length;i++)for(let j=i+1;j<b.length;j++){const p=b[i],q=b[j],ox=(p.w+q.w)/2-Math.abs(p.x-q.x),oy=(p.h+q.h)/2-Math.abs(p.y-q.y);
+   if(ox<=0||oy<=0)continue;bad++;
+   const hor=ox<oy,sg=hor?(p.x<q.x||(p.x===q.x&&i<j)?-1:1):(p.y<q.y||(p.y===q.y&&i<j)?-1:1),d=(hor?ox:oy)/2+.5,mp=p.fix?0:q.fix?2:1,mq=q.fix?0:p.fix?2:1;
+   if(hor){p.x+=sg*d*mp;q.x-=sg*d*mq}else{p.y+=sg*d*mp;q.y-=sg*d*mq}}
+  for(const o of b){o.x=cl(o.x,o.w/2,Math.max(o.w/2,W-o.w/2));o.y=cl(o.y,o.h/2,Math.max(o.h/2,H-o.h/2))}}
+ for(const o of b){o.c.style.left=o.x+"px";o.c.style.top=o.y+"px"}
+ return !bad}
+function layoutNet(){for(let k=0;k<12;k++){placeNet(k*.2);if(!netview.checked||relaxNet())return}}
 netview.addEventListener("change",()=>{try{localStorage.setItem("rbs.net",netview.checked?"1":"0")}catch(e){}links._h="";layoutNet();drawLinks()});
 try{netview.checked=localStorage.getItem("rbs.net")==="1"}catch(e){}
 let rz=0;new ResizeObserver(()=>{clearTimeout(rz);rz=setTimeout(()=>{if(last.members){links._h="";layoutNet();drawLinks()}},150)}).observe(teamwrap);
@@ -507,20 +639,151 @@ startchip.addEventListener("click",()=>{const open=welcomeEl.hidden;startShow(op
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!welcomeEl.hidden){startShow(false);if(VS)VS.postMessage({type:"startOpen",open:false});startchip.focus()}});
 function leadSave(){const v=leadname.value.trim();if(!v||v.length>40){leadmsg.textContent="Type a name (max 40 characters).";return}leadmsg.textContent="Saving…";if(VS)VS.postMessage({type:"setLeader",name:v})}
 leadsave.addEventListener("click",leadSave);leadname.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();leadSave()}});
-document.getElementById("savebtn").addEventListener("click",()=>{if(VS)VS.postMessage({type:"saveTeam"})});document.getElementById("restbtn").addEventListener("click",()=>{if(VS)VS.postMessage({type:"restoreTeam"})});
+document.getElementById("savebtn").addEventListener("click",()=>{if(VS)VS.postMessage({type:"saveTeam"})});document.getElementById("restbtn").addEventListener("click",()=>{if(VS)VS.postMessage({type:"restoreTeam"})});document.getElementById("newteambtn").addEventListener("click",()=>{if(VS)VS.postMessage({type:"createTeam"})});document.getElementById("teambtn").addEventListener("click",()=>{if(VS)VS.postMessage({type:"switchTeam"})});
 addbtn.addEventListener("click",()=>{nmmsg.textContent="";nmsend.disabled=false;nmdlg.showModal();nmname.focus()});
 nmcancel.addEventListener("click",()=>nmdlg.close());
-function nmDone(ok,msg){nmmsg.textContent=msg;nmmsg.style.color=ok?"var(--work)":"var(--wait)";nmsend.disabled=ok;if(ok){nmname.value="";nmjob.value=""}}
+function nmDone(ok,msg){nmmsg.textContent=msg;nmmsg.style.color=ok?"var(--work)":"var(--wait)";nmsend.disabled=ok;if(ok){const n=nmname.value.trim();nmname.value="";nmjob.value="";if(nmdlg.open){nmdlg.close();toast("Saved: "+(n||"new member")+" added")}}}
 nmform.addEventListener("submit",async e=>{e.preventDefault();const name=nmname.value.trim(),job=nmjob.value.trim();
  if(!name||!job){nmDone(false,"Type a name and the job.");return}
  if(name.length>60||job.length>200){nmDone(false,"Too long: name max 60, job max 200 characters.");return}
  nmsend.disabled=true;nmmsg.textContent="Saving…";nmmsg.style.color="";
  if(VS)VS.postMessage({type:"newMember",name,job});else nmDone(false,"Open this page from VS Code.")});
-if(VS){window.addEventListener("message",e=>{const d=e.data||{};if(d.type==="decideResult")decideDone(!!d.ok,String(d.msg||""));else if(d.type==="state"&&d.state&&d.state.members)render(d.state);else if(d.type==="newMemberResult")nmDone(!!d.ok,String(d.msg||""));else if(d.type==="role")roleIn(d);else if(d.type==="editResult")edDone(!!d.ok,String(d.msg||""));
+if(VS){window.addEventListener("message",e=>{const d=e.data||{};if(d.type==="decideResult")decideDone(!!d.ok,String(d.msg||""));else if(d.type==="state"&&d.state&&d.state.members){render(d.state);tokAsk();if(dlg.open&&edM)orphRender()}else if(d.type==="tokens")tokShow(d.data||{});else if(d.type==="botifyResult")botResult(d);else if(d.type==="adoptResult")adoptDone(d);else if(d.type==="newMemberResult")nmDone(!!d.ok,String(d.msg||""));else if(d.type==="role")roleIn(d);else if(d.type==="editResult")edDone(!!d.ok,String(d.msg||""));
  else if(d.type==="brain")brainIn(d);else if(d.type==="brainResult"){brmsg.textContent=String(d.msg||"");brmsg.style.color=d.ok?"var(--work)":"var(--wait)"}
  else if(d.type==="uploadResult"){if(d.ok&&edM&&d.member===edM.id){edAv="pic:"+d.file;pickRender();edsends(false)}edmsg.textContent=String(d.msg||"");edmsg.style.color=d.ok?"var(--work)":"var(--wait)"}
  else if(d.type==="attachResult"){if(edM&&d.id===edM.id){dgfile.textContent=d.name?String(d.name):"";dgsend.disabled=false;dgmsg.textContent=d.msg?String(d.msg):""}}
- else if(d.type==="digestResult")dgDone(!!d.ok,String(d.msg||""));else if(d.type==="leaderResult"){leadmsg.textContent=String(d.msg||"");leadmsg.style.color=d.ok?"var(--work)":"var(--wait)"}});
+ else if(d.type==="digestResult")dgDone(!!d.ok,String(d.msg||""));else if(d.type==="leaderResult"){leadmsg.textContent=String(d.msg||"");leadmsg.style.color=d.ok?"var(--work)":"var(--wait)";if(d.ok)toast("Saved: leader name")}});
  VS.postMessage({type:"ready"})}
 else upd.textContent="Open this page from VS Code (Rebel Bot Swarm: Show).";
+// 0.5.1 saved settings that match no card: listed at the top of the edit box; the user picks a card for each one
+function orphRender(){const box=document.getElementById("edorph"),os=last.orphans||[];if(!edM||!os.length){box.hidden=true;box.innerHTML="";return}
+ const cards=(last.members||[]).filter(m=>m.id).map(m=>`<option value="${esc(m.id)}"${m.id===edM.id?" selected":""}>${esc(m.display||m.name)}</option>`).join("");
+ box.innerHTML=`<h4>Saved settings with no card (${os.length})</h4><div class="muted">Kept in your members file. Choose the card each one belongs to.</div>`+
+  os.map(o=>`<div class="orow"><span class="ok"><b>${esc(o.key)}</b>${o.name?": "+esc(o.name):""}${o.team?" · "+esc(o.team):""}${o.role?" · "+esc(o.role):""}${o.avatar&&o.avatar!=="auto"?" · "+esc(o.avatar.replace(/^(pic|style):/,"")):""}</span>`+
+   `<select data-k="${esc(o.key)}" aria-label="Card for ${esc(o.key)}">${cards}</select><button type="button" data-k="${esc(o.key)}">Use for this card</button></div>`).join("")+`<div id="orphmsg" aria-live="polite"></div>`;box.hidden=false}
+document.getElementById("edorph").addEventListener("click",e=>{const b=e.target.closest("button[data-k]");if(!b)return;const k=b.dataset.k,sel=[...document.querySelectorAll("#edorph select")].find(x=>x.dataset.k===k);
+ if(!sel||!sel.value)return;b.disabled=true;const om=document.getElementById("orphmsg");if(om)om.textContent="Moving...";if(VS)VS.postMessage({type:"adoptSettings",from:k,to:sel.value});else if(om)om.textContent="Open this page from VS Code."});
+function adoptDone(d){const om=document.getElementById("orphmsg");if(!d.ok){if(om){om.textContent=String(d.msg||"Not moved.");om.style.color="var(--wait)"}document.querySelectorAll("#edorph button").forEach(b=>b.disabled=false);return}
+ toast("Saved settings moved");orphRender()}
+// 0.5.1 fitHeader: full labels when the top row fits; short labels (hn) when it does not; a second row (hw) when even
+// the short labels do not fit. Measured, not guessed from the window width (the row's contents change: team button, names).
+function fitHeader(){const h=document.querySelector("header");if(!h)return;h.classList.remove("hn","hw","hx");
+ const clash=()=>{const left=[...h.querySelectorAll(":scope > h1, #viewchip, #startchip")].filter(e=>!e.hidden&&e.offsetParent).reduce((m,e)=>Math.max(m,e.getBoundingClientRect().right),0),
+  bs=[...h.querySelectorAll(".hgrp button")].filter(b=>!b.hidden&&b.offsetParent);return bs.length&&Math.min(...bs.map(b=>b.getBoundingClientRect().left))<left+8};
+ if(clash()){h.classList.add("hn");if(clash())h.classList.add("hw")}
+ const sb=document.getElementById("sparkbtn"),hr=h.getBoundingClientRect().right;
+ if(h.classList.contains("hw")&&sb&&(sb.scrollWidth>sb.clientWidth+1||sb.getBoundingClientRect().right>hr-2))h.classList.add("hx")}
+window.addEventListener("resize",()=>{clearTimeout(fitHeader.t);fitHeader.t=setTimeout(fitHeader,80)});
+// 0.5.1 Tokens pop-out: the extension reads the usage fields in the transcripts (core.tokenUse); nothing is estimated here
+const tokpop=document.getElementById("tokpop"),tokbtn=document.getElementById("tokbtn");
+const tokFmt=n=>n>=1e6?(n/1e6).toFixed(n>=1e8?0:1)+"M":n>=1e3?Math.round(n/1e3)+"k":String(n);
+const tokSplit=r=>`new input ${(r.input||0).toLocaleString()}, output ${(r.output||0).toLocaleString()}, cache write ${(r.cacheWrite||0).toLocaleString()}, cache read ${(r.cacheRead||0).toLocaleString()} (${r.chats||0} transcript${r.chats===1?"":"s"})`;
+function tokAsk(){if(!tokpop.hidden&&VS)VS.postMessage({type:"tokens"})}
+function tokOpen(open){tokpop.hidden=!open;tokbtn.setAttribute("aria-expanded",String(open));if(open){document.getElementById("tokrows").textContent="Reading the transcripts...";document.getElementById("toktotal").textContent="";if(VS)VS.postMessage({type:"tokens"});else tokShow({error:"Open this page from VS Code to read token use."})}}
+function tokShow(d){
+ const rowsEl=document.getElementById("tokrows"),totEl=document.getElementById("toktotal");
+ if(d.error||!d.ready){rowsEl.textContent=d.error?"Could not read token use: "+d.error:"Token use: not known yet (the dashboard has not read the chats).";totEl.textContent="";return}
+ const shown=new Set(((last&&last.members)||[]).map(m=>m.id)),whole=!(last&&last.view);
+ const rows=(d.rows||[]).filter(r=>shown.has(r.id));
+ if(whole&&d.other&&d.other.chats)rows.push({...d.other,name:"Helpers with no card",known:true,id:""});
+ rows.sort((a,b)=>(b.known-a.known)||(b.total-a.total)||String(a.name).localeCompare(String(b.name)));
+ const t={input:0,output:0,cacheWrite:0,cacheRead:0,chats:0,total:0};for(const r of rows)if(r.known)for(const k in t)t[k]+=r[k]||0;
+ const max=Math.max(1,...rows.map(r=>r.total||0)),since=new Date(d.since);
+ document.getElementById("toksince").textContent=isNaN(since)?"":"since "+since.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" 00:00";
+ totEl.innerHTML=`${whole?"Team total":"This team"}: <b>${t.total.toLocaleString()}</b> tokens`;totEl.title=tokSplit(t);
+ rowsEl.innerHTML=rows.length?rows.map(r=>r.known?`<div class="tokrow" title="${esc(r.name+": "+tokSplit(r))}"><span class="n">${esc(r.name)}</span><span class="tokbar"><i style="width:${(100*(r.total||0)/max).toFixed(1)}%"></i></span><span class="v">${tokFmt(r.total||0)}</span></div>`
+  :`<div class="tokrow unk" title="${esc(r.name)}: no open chat and no helper transcript found today"><span class="n">${esc(r.name)}</span><span class="v">not known</span></div>`).join(""):"No members on this dashboard.";
+}
+tokbtn.addEventListener("click",e=>{e.stopPropagation();tokOpen(tokpop.hidden)});
+tokpop.addEventListener("click",e=>e.stopPropagation());
+document.addEventListener("click",()=>{if(!tokpop.hidden)tokOpen(false)});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!tokpop.hidden){tokOpen(false);tokbtn.focus()}});
+// 0.5.1 BOTIFY: the picture is read here, on this computer, and never sent anywhere. Only the finished drawing (SVG)
+// goes to the extension, which saves it as a new file in the avatars folder.
+const botdlg=document.getElementById("botdlg"),botcv=document.getElementById("botcv"),botx=botcv.getContext("2d",{willReadFrequently:true}),botdrop=document.getElementById("botdrop"),
+ botfile=document.getElementById("botfile"),botsize=document.getElementById("botsize"),botgo=document.getElementById("botgo"),botsave=document.getElementById("botsave"),
+ botmsg=document.getElementById("botmsg"),botprev=document.getElementById("botprev"),botctl=document.getElementById("botctl"),botempty=document.getElementById("botempty");
+let botImg=null,botC={x:150,y:130,r:90},botBo=null,botDrag=null,botSaving=false;
+const BOT_IN=["botskin","bothair","boths","botbeard","boteye","botglass"].map(i=>document.getElementById(i));
+function botExtras(bo){let t="";
+ if(bo.beard){const P="M32.6 47 C32.6 60 40.5 66.8 50 66.8 C59.5 66.8 67.4 60 67.4 47 C64 54.5 58.5 58.2 54.5 58.4 C52 56.6 48 56.6 45.5 58.4 C41.5 58.2 36 54.5 32.6 47Z";
+  t+=bo.beard==="full"?`<path d="${P}" fill="${bo.hair}" ${S(2)}/>`:`<path d="${P}" fill="${bo.hair}" fill-opacity=".38"/>`}
+ if(bo.glass)t+=`<g fill="#fff" fill-opacity=".18" ${S(1.8)}><circle cx="43" cy="46" r="6.3"/><circle cx="57" cy="46" r="6.3"/></g><path d="M49.3 45.5 Q50 44.5 50.7 45.5 M36.7 45 L32.5 43.5 M63.3 45 L67.5 43.5" fill="none" ${S(1.8)}/>`;
+ return t}
+function botOpen(){if(!edM)return;botImg=null;botBo=null;botx.clearRect(0,0,300,300);botempty.hidden=false;botprev.innerHTML="";botctl.hidden=true;botgo.disabled=true;botsave.disabled=true;
+ botmsg.textContent="";botfile.value="";botdlg.showModal();botdrop.focus()}
+function botLoad(file){if(!file||!/^image\/(png|jpeg|webp|gif|bmp)$/.test(file.type)){botmsg.textContent="Use a PNG, JPEG or WebP picture.";return}
+ if(file.size>15000000){botmsg.textContent="That picture is over 15 MB.";return}
+ const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{URL.revokeObjectURL(u);botImg=im;botC={x:150,y:130,r:300*botsize.value/100};botDraw();botgo.disabled=false;botempty.hidden=true;
+  botmsg.textContent="Drag the circle onto the face, then press Botify."};im.onerror=()=>{URL.revokeObjectURL(u);botmsg.textContent="That picture could not be read."};im.src=u}
+function botDraw(){botx.clearRect(0,0,300,300);if(!botImg)return;const k=Math.min(300/botImg.width,300/botImg.height),w=botImg.width*k,h=botImg.height*k;
+ botx.fillStyle="#fff";botx.fillRect(0,0,300,300);botx.drawImage(botImg,(300-w)/2,(300-h)/2,w,h);botx.save();botx.lineWidth=3;botx.strokeStyle="#ffd166";botx.setLineDash([7,5]);
+ botx.beginPath();botx.arc(botC.x,botC.y,botC.r,0,7);botx.stroke();botx.restore()}
+function botPx(){const k=Math.min(300/botImg.width,300/botImg.height),w=botImg.width*k,h=botImg.height*k,c=document.createElement("canvas");c.width=300;c.height=300;
+ const x=c.getContext("2d",{willReadFrequently:true});x.fillStyle="#fff";x.fillRect(0,0,300,300);x.drawImage(botImg,(300-w)/2,(300-h)/2,w,h);return {d:x.getImageData(0,0,300,300).data,box:[(300-w)/2,(300-h)/2,(300+w)/2,(300+h)/2]}}
+const bd=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+const bhex=c=>"#"+c.map(v=>Math.round(cl(v,0,255)).toString(16).padStart(2,"0")).join("");
+function bmed(px){if(!px.length)return null;const m=i=>{const a=px.map(p=>p[i]).sort((x,y)=>x-y);return a[a.length>>1]};return [m(0),m(1),m(2)]}
+/** Reads the face inside the circle: skin from the cheeks, hair from above the head (none if little differs from skin and
+ * background), long hair beside the jaw, beard below the mouth. The user can change every value after. */
+function botRead(){const {d,box}=botPx(),{x:cx,y:cy,r}=botC;
+ const at=(x,y)=>{x=Math.round(x);y=Math.round(y);if(x<box[0]||y<box[1]||x>=box[2]||y>=box[3]||x<0||y<0||x>=300||y>=300)return null;const i=(y*300+x)*4;return [d[i],d[i+1],d[i+2]]};
+ const area=(x0,y0,x1,y1,f)=>{const o=[];for(let y=y0;y<=y1;y+=2)for(let x=x0;x<=x1;x+=2){const p=at(x,y);if(p&&(!f||f(x,y)))o.push(p)}return o};
+ const lum=p=>(Math.max(...p)+Math.min(...p))/510;
+ const skin=bmed(area(cx-.45*r,cy-.05*r,cx+.45*r,cy+.45*r,(x,y)=>((x-cx)/(.45*r))**2+((y-cy-.2*r)/(.3*r))**2<=1).filter(p=>lum(p)>.12&&lum(p)<.96))||[224,172,140];
+ const edge=[...area(box[0],box[1],box[2]-1,box[1]+8),...area(box[0],box[1],box[0]+8,box[3]-1),...area(box[2]-9,box[1],box[2]-1,box[3]-1)],bg=bmed(edge)||[255,255,255];
+ const band=area(cx-.8*r,cy-1.3*r,cx+.8*r,cy-.62*r),hairPx=band.filter(p=>bd(p,skin)>55&&bd(p,bg)>45);
+ const bald=!band.length||hairPx.length/band.length<.14,hair=bmed(hairPx)||[59,42,32];
+ const near=(p,c,t)=>bd(p,c)<t;
+ const sides=[...area(cx-1.3*r,cy+.2*r,cx-.95*r,cy+.9*r),...area(cx+.95*r,cy+.2*r,cx+1.3*r,cy+.9*r)];
+ const long=!bald&&sides.length&&sides.filter(p=>near(p,hair,60)).length/sides.length>.35;
+ const chin=area(cx-.45*r,cy+.6*r,cx+.45*r,cy+.95*r,(x,y)=>Math.hypot(x-cx,y-cy)<r*.98),bpx=chin.filter(p=>bd(p,skin)>50&&bd(p,bg)>45&&lum(p)<lum(skin)),cf=chin.filter(p=>bd(p,bg)>45).length,bf=cf?bpx.length/cf:0,beardC=bmed(bpx);   // beard: darker than skin, not background
+ const top=area(cx-.6*r,cy-1.25*r,cx+.6*r,cy-1.05*r),tf=top.length?top.filter(p=>near(p,hair,60)).length/top.length:0;
+ const flat=(c,sl,sh,ll,lh)=>{const [hh,ss,l]=hsl(bhex(c));return hx([hh,cl(ss,sl,sh),cl(l,ll,lh)])};
+ return {skin:flat(skin,.25,.65,.3,.86),hair:flat(bald&&beardC&&bf>.16?beardC:hair,.1,.75,.08,.8),hs:bald?"":long?"long":tf>.55?"spiky":"crop",beard:bf>.38?"full":bf>.16?"short":"",eye:0,glass:false}}
+// the face: 100 x 100 on white, like the pictures in the avatars folder; colours from the read, shapes from the choices
+const BEYE=["#3a2a22","#2f7fb8","#3f7d4e","#4d5560"];
+function bfyFace(o){const sk=o.skin,dk=shade(sk,-.045),nz=shade(sk,-.13),hr=o.hair,hd=shade(hr,-.08),P=(d,c)=>`<path d="${d}" fill="${c}"/>`,R=(x,y,w,h,c,r=0)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${c}"/>`,C=(x,y,r,c)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`;
+ let t=R(0,0,100,100,"#ffffff");
+ if(o.hs==="long")t+=P("M15 100 L17 40 C18 20 33 9 50 9 C67 9 82 20 83 40 L85 100Z",hr);
+ if(o.hs==="buns")t+=C(17,60,9,hr)+C(83,60,9,hr);
+ t+=R(19,48,9,15,dk,4)+R(72,48,9,15,dk,4);                                            // ears
+ const F="M27 34 L73 34 L74 82 L64 93 L36 93 L26 82Z";
+ t+=P("M27 40 C27 24 37 15 50 15 C63 15 73 24 73 40Z",o.hs?hr:sk)+P(F,sk)+P("M64 34 L73 34 L74 82 L64 93Z",dk);   // round crown (shows when bald), face, slight shadow side                                     // face, with a slight shadow side
+ t+={crop:P("M24 46 L25 31 L35 18 L50 15 L65 18 L75 31 L76 46 L71 46 L69 34 L50 30 L31 34 L29 46Z",hr),
+  part:P("M20 60 L23 30 L37 13 L50 22 L63 13 L77 30 L80 60 L74 60 L72 37 L67 28 L58 37 L50 31 L42 37 L33 28 L28 37 L26 60Z",hr),
+  spiky:P("M21 56 L24 34 L18 34 L28 18 L40 12 L50 17 L60 12 L72 18 L82 34 L76 34 L79 56 L73 50 L71 38 L64 33 L60 22 L55 34 L44 34 L40 24 L34 38 L28 42 L27 52Z",hr),
+  curls:[[27,27],[35,19],[44,15],[53,15],[62,18],[70,25],[25,38],[75,37],[24,48],[76,48]].map(([x,y])=>C(x,y,7,hr)).join("")+R(25,24,50,9,hr,4),
+  long:P("M26 46 L27 30 C33 22 41 18 50 18 C59 18 67 22 73 30 L74 46 L68 34 L50 27 L32 34Z",hr),
+  buns:P("M26 44 L27 30 C33 22 41 18 50 18 C59 18 67 22 73 30 L74 44 L67 32 L50 26 L33 32Z",hr),"":""}[o.hs||""]||"";
+ if(o.beard==="full")t+=P("M26 62 L32 62 L36 72 L64 72 L68 62 L74 62 L74 82 L64 95 L36 95 L26 82Z",hr)+P("M41 76 L59 76 L57 80 L43 80Z",shade(sk,-.18));
+ else if(o.beard==="short")t+=P("M33 80 L40 87 L60 87 L67 80 L64 92 L36 92Z",hr)+R(43,77,14,2.4,shade(sk,-.2),1.2);
+ else if(o.beard==="tache")t+=P("M37 76 L50 72 L63 76 L63 80 L50 77 L37 80Z",hd);
+ if(o.beard!=="full"&&o.beard!=="short")t+=R(44,82,12,2.6,shade(sk,-.2),1.3);              // mouth
+ t+=R(48.6,52,2.8,13,nz,1.4);                                                         // nose
+ const ec=BEYE[o.eye]||BEYE[0];t+=C(39,56,3.4,ec)+C(61,56,3.4,ec);                    // dot eyes
+ if(o.glass)t+=`<g fill="none" stroke="#2b2f3a" stroke-width="2"><rect x="31" y="49" width="16" height="13" rx="3"/><rect x="53" y="49" width="16" height="13" rx="3"/><path d="M47 55 L53 55"/></g>`;
+ return `<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 100 100">${t}</svg>`}
+const botUri=svg=>"data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
+function botShow(){botprev.innerHTML=avatar({name:edM.name,job:edM.job,colour:edM.colour,status:"idle",style:"crew",pic:botUri(bfyFace(botBo))})}
+function botFill(){const [sk,hr,hs,bdd,ey,gl]=BOT_IN;sk.value=botBo.skin;hr.value=botBo.hair;hs.value=botBo.hs;bdd.value=botBo.beard;ey.value=String(botBo.eye);gl.checked=botBo.glass}
+botgo.addEventListener("click",()=>{if(!botImg)return;try{botBo=botRead()}catch(e){botmsg.textContent="Could not read the picture: "+e.message;return}botFill();botShow();botctl.hidden=false;botsave.disabled=false;
+ botmsg.textContent="Here it is. Change anything below, then Save as new avatar."});
+for(const el of BOT_IN)el.addEventListener("input",()=>{if(!botBo)return;const [sk,hr,hs,bdd,ey,gl]=BOT_IN;botBo={skin:sk.value,hair:hr.value,hs:hs.value,beard:bdd.value,eye:+ey.value,glass:gl.checked};botShow()});
+botsave.addEventListener("click",()=>{if(!botBo||!edM||botSaving)return;const svg=bfyFace(botBo);
+ botSaving=true;botsave.disabled=true;botmsg.textContent="Saving…";if(VS)VS.postMessage({type:"botifySave",member:edM.id,svg});else{botSaving=false;botmsg.textContent="Open this page from VS Code to save."}});
+function botResult(d){botSaving=false;if(!d.ok){botsave.disabled=false;botmsg.textContent=String(d.msg||"Not saved.");botmsg.style.color="var(--wait)";return}
+ botmsg.style.color="";if(edM&&d.member===edM.id){edAv="pic:"+d.file;pickRender();edsends(false);edmsg.textContent=String(d.msg||"");edmsg.style.color="var(--work)"}
+ botdlg.close();toast("Avatar made: "+d.file+". Press Save to keep it.")}
+document.getElementById("botcancel").addEventListener("click",()=>botdlg.close());
+botfile.addEventListener("change",()=>botLoad(botfile.files[0]));
+botsize.addEventListener("input",()=>{botC.r=300*botsize.value/100;botDraw()});
+document.addEventListener("paste",e=>{if(!botdlg.open)return;const it=[...(e.clipboardData||{}).items||[]].find(i=>i.type.startsWith("image/"));if(it){e.preventDefault();botLoad(it.getAsFile())}});
+botdrop.addEventListener("dragover",e=>{e.preventDefault();botdrop.classList.add("over")});botdrop.addEventListener("dragleave",()=>botdrop.classList.remove("over"));
+botdrop.addEventListener("drop",e=>{e.preventDefault();botdrop.classList.remove("over");const f=(e.dataTransfer&&e.dataTransfer.files||[])[0];if(f)botLoad(f)});
+const botPt=e=>{const r=botcv.getBoundingClientRect();return [(e.clientX-r.left)*300/r.width,(e.clientY-r.top)*300/r.height]};
+botcv.addEventListener("pointerdown",e=>{if(!botImg)return;const [x,y]=botPt(e);botDrag=[x-botC.x,y-botC.y];botcv.setPointerCapture(e.pointerId)});
+botcv.addEventListener("pointermove",e=>{if(!botDrag)return;const [x,y]=botPt(e);botC.x=cl(x-botDrag[0],0,300);botC.y=cl(y-botDrag[1],0,300);botDraw()});
+botcv.addEventListener("pointerup",()=>{botDrag=null});
+botdrop.addEventListener("keydown",e=>{if(!botImg)return;const m={ArrowLeft:[-4,0],ArrowRight:[4,0],ArrowUp:[0,-4],ArrowDown:[0,4]}[e.key];if(m){e.preventDefault();botC.x=cl(botC.x+m[0],0,300);botC.y=cl(botC.y+m[1],0,300);botDraw()}});
 </script></body></html>

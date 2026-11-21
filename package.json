@@ -1,8 +1,8 @@
 {
   "name": "rebel-bot-swarm",
   "displayName": "Rebel Bot Swarm",
-  "description": "A dashboard for your Claude Code team: Spark a new chat, status, original avatars, who is working on what, live progress, comms lines, member brains, Save team / Restore team. Local only.",
-  "version": "0.4.1",
+  "description": "A dashboard for your Claude Code team: open your team leader in a new chat, status, original avatars, who is working on what, live progress, comms lines, member brains, Save team / Restore team. Local only.",
+  "version": "0.5.2",
   "publisher": "simonjamesfowler-ux",
   "license": "MIT",
   "repository": {
@@ -48,7 +48,7 @@
       },
       {
         "command": "rebelBotSwarm.spark",
-        "title": "Rebel Bot Swarm: Spark a new chat"
+        "title": "Rebel Bot Swarm: Open the team leader in a new chat"
       },
       {
         "command": "rebelBotSwarm.openRequests",
@@ -65,6 +65,22 @@
       {
         "command": "rebelBotSwarm.setLeader",
         "title": "Rebel Bot Swarm: Set leader name"
+      },
+      {
+        "command": "rebelBotSwarm.addTeam",
+        "title": "Rebel Bot Swarm: Create team"
+      },
+      {
+        "command": "rebelBotSwarm.showTeam",
+        "title": "Rebel Bot Swarm: Switch team (which team this window shows)"
+      },
+      {
+        "command": "rebelBotSwarm.teamColour",
+        "title": "Rebel Bot Swarm: Change team colour"
+      },
+      {
+        "command": "rebelBotSwarm.deleteTeam",
+        "title": "Rebel Bot Swarm: Delete team (members keep their cards)"
       }
     ],
     "configuration": {
@@ -123,6 +139,18 @@
           "default": false,
           "markdownDescription": "Show a card for a live session that still has its default title (the project-folder name, for example `my-project` or `my-project-e4`) and is not on the board. Off = such sessions are hidden."
         },
+        "rebelBotSwarm.condenseTokens": {
+          "type": "number",
+          "default": 250000,
+          "minimum": 10000,
+          "markdownDescription": "A member card highlights its **Condense** button when that chat's context is this many tokens or more (read from the last reply in the chat transcript). The button also lights up when the board job says done."
+        },
+        "rebelBotSwarm.condensePrompt": {
+          "type": "string",
+          "editPresentation": "multilineText",
+          "default": "BRAIN SAVE before {action}. You are {member}. Before this chat is {actionPast}, write what you learned on your last task to your brain: your memory files (MEMORY.md and its notes) or the team wiki, as your own rules say. Add one log line for the job, and each MISTAKE: and LESSON: line. Write the state of any open work so that a fresh chat can continue it. Do not start new work.\nWhen this is done, reply with ONE line: \"BRAIN SAVED - you can {actionNext} now.\"",
+          "markdownDescription": "The prompt that **Condense** puts on the clipboard (and in the member's chat box when the chat is not open), so the member saves its lessons to its brain first. `{member}`, `{action}` (condense / restart), `{actionPast}` (condensed / restarted), `{actionNext}` (type /compact / close this chat and start a new one). Empty = the default text."
+        },
         "rebelBotSwarm.decidePrompt": {
           "type": "string",
           "editPresentation": "multilineText",
@@ -149,19 +177,73 @@
           "type": "string",
           "default": "Coordinator",
           "maxLength": 40,
-          "markdownDescription": "The name of your team leader. **Spark** opens a new chat as this leader (it says \"Hi, I am <name>\"), the Spark button shows the name, and the dashboard shows the leader as a card (the board row or member with this name, else the row whose job says coordinator). Example: `Ada`."
+          "markdownDescription": "The name of your team leader. The **OPEN** button opens a new chat as this leader (it says \"Hi, I am <name>\"), the OPEN button shows the name on the leader's card, and the dashboard shows the leader as a card (the board row or member with this name, else the row whose job says coordinator). Example: `Ada`."
         },
         "rebelBotSwarm.leaderRole": {
           "type": "string",
           "default": "the team leader and coordinator",
           "maxLength": 120,
-          "markdownDescription": "The role of your team leader, used in the Spark starter prompt (\"You are <name>, <role> of my Rebel Bot Swarm team\")."
+          "markdownDescription": "The role of your team leader, used in the starter prompt of the OPEN button (\"You are <name>, <role> of my Rebel Bot Swarm team\")."
+        },
+        "rebelBotSwarm.teams": {
+          "type": "array",
+          "scope": "application",
+          "default": [],
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Team name, for example Red or Website"
+              },
+              "leader": {
+                "type": "string",
+                "description": "Name of the card that leads this team, for example Red Leader"
+              },
+              "scope": {
+                "type": "string",
+                "description": "Optional short line: what this team works on"
+              },
+              "color": {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{6}$",
+                "description": "Team colour as #rrggbb, shown on the team header and on each of its cards"
+              },
+              "parent": {
+                "type": "string",
+                "description": "Optional: the team this one is a sub-team of (one level), for example Security under Website"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "markdownDescription": "Teams inside the swarm (max 12). Each team has a `name`, an optional `leader` (the name of the card that leads it) and an optional `scope` line shown on its header an optional `color` (#rrggbb) shown on its header and cards, and an optional `parent` (the team it is a sub-team of, one level). Example: `[{\"name\": \"Website\", \"leader\": \"Ada\", \"scope\": \"site pages, blog, downloads\"}]`. A member joins a team in its card's edit panel. User settings only, so every VS Code window shows the same teams. The swarm leader (`leaderName`) stays above all teams."
+        },
+        "rebelBotSwarm.roles": {
+          "type": "array",
+          "scope": "application",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "Member",
+            "Specialist",
+            "Helper"
+          ],
+          "markdownDescription": "The roles you can pick for a member in its edit panel. \"Team leader\" is always there."
+        },
+        "rebelBotSwarm.team": {
+          "type": "string",
+          "scope": "window",
+          "default": "",
+          "markdownDescription": "Show ONE team in this window: set it in the **Workspace** settings (for example `Website`). The dashboard then shows that team and the swarm leader, and **Spark** starts that team's leader. Empty = the whole swarm."
         },
         "rebelBotSwarm.sparkPrompt": {
           "type": "string",
           "editPresentation": "multilineText",
           "default": "You are {leader}, {leaderRole} of my Rebel Bot Swarm team of Claude Code members. First say only: \"Hi, I'm {leader}. What would you like to do?\" and wait for my answer.\nThen route the task, and do not do the work yourself:\n1. If an agent file in {agentsFolder} fits the task, hand the task to that member with the Agent tool (subagent_type = the agent's name) and give it a short, clear brief.\n2. If no member fits, or the task is for the coordinator, write ONE request file \"REQUEST <yyyy-mm-dd HHMMSS>.json\" in {requestsFolder} with {\"type\": \"request\", \"task\": \"<the task>\", \"from\": \"Spark\"}.\n{board}Ask at most one question if the task is not clear. Keep this chat short.\nAt the end, tell me in one line who has the task, and that I can close this tab: the Rebel Bot Swarm dashboard keeps the status.",
-          "markdownDescription": "The starter prompt that **Spark** puts in a new Claude Code chat (you press Enter to send it). `{agentsFolder}` = `~/.claude/agents`, `{requestsFolder}` = the requests folder, `{leader}` = the leader name, `{leaderRole}` = the leader role, `{board}` = one line about your board file (empty if no board is set). Empty = the default text."
+          "markdownDescription": "The starter prompt that the **OPEN** button puts in a new Claude Code chat (you press Enter to send it). `{agentsFolder}` = `~/.claude/agents`, `{requestsFolder}` = the requests folder, `{leader}` = the leader name, `{leaderRole}` = the leader role, `{board}` = one line about your board file (empty if no board is set). Empty = the default text."
         }
       }
     },
@@ -186,8 +268,8 @@
           },
           {
             "id": "spark",
-            "title": "2. Press Spark to start work",
-            "description": "**Spark** opens a new Claude Code chat with a starter prompt in the chat box. Press Enter, then say what you want to do. The chat hands the task to the right member.\n[Spark a new chat](command:rebelBotSwarm.spark)",
+            "title": "2. Press OPEN to start work",
+            "description": "**OPEN** (it shows your leader's name) opens a new Claude Code chat with a starter prompt in the chat box. Press Enter, then say what you want to do. The chat hands the task to the right member.\n[Spark a new chat](command:rebelBotSwarm.spark)",
             "media": {
               "image": "media/icon.png",
               "altText": "Rebel Bot Swarm logo"

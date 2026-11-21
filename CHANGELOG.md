@@ -1,5 +1,78 @@
 # Changelog
 
+## 0.5.2
+- **OPEN button.** The leader button reads OPEN and the name on the leader's card (for example OPEN COORDINATOR)
+  and follows a rename at once. It always shows the full name: when the row is short of room the other buttons
+  become icons (with tooltips), then the row wraps, and only then does the name break onto two lines.
+  What it does is unchanged.
+- **Botify.** In a member's avatar list, **Create...** makes a cartoon avatar from a photo or screen grab: paste,
+  drop or choose a picture, drag the circle onto the face, press Botify, adjust skin, hair, beard, eyes and glasses,
+  then Save as new avatar. The picture is read inside the dashboard and never leaves the computer; only the drawing
+  is saved (a new BOTIFY file in the avatars folder).
+- **Network view.** Nodes never overlap; each team bar is only as wide as the name; lines run under the nodes, end at
+  the bar and are routed around every face; names stay readable.
+- **Save.** A pop-out closes only once the save has landed, with a "Saved" note; an error keeps it open. Changing a
+  setting no longer reloads the page. Save and Close sit at the top of the member pop-out only, always visible.
+- **Brain Folder** link in each member pop-out (tooltip: the full path) opens the brain folder, making it first
+  with an empty MEMORY.md when needed.
+- Team and Role boxes match the theme.
+- **Saved settings with no card** are kept and listed at the top of a member's edit box; choose the card each one
+  belongs to and press Use for this card (members.json is backed up first).
+- **Smaller top buttons.** 32px tall with 12px text; OPEN is the only filled button. When the row is short of room
+  the other buttons become icons (tooltips keep the names), then the row wraps.
+- **Tokens button.** Opens a small pop-out with each member's token use today and the team total, with a bar each.
+  The figures are the `usage` fields Claude Code writes in the transcripts (the member's open chat and its helpers),
+  each reply counted once. A member with no transcript today shows "not known". Hover a row for the split.
+- The figure boxes under the top row wrap on narrow windows: nothing on the dashboard scrolls sideways (360px and up).
+- Updating keeps your data: members, teams, avatars (including Botify ones) and brains live outside the extension's
+  install folder, and an upgrade test checks them before each release.
+
+## 0.5.1
+- **Smaller cards.** A card now shows only the picture, the name, the status and the role or TEAM LEAD tag. The job,
+  the files booked, the shared-slot note and the Condense button moved to the full view (click the card).
+- **Add team member shows the new card at once** (as ready). It is kept in the members file (`added`) until your
+  board has a row for it. A name whose first word another card already uses is refused, because cards are keyed by it.
+- **A colour per team.** Create team asks for a colour (12 colours or your own #rrggbb). Change it later with
+  **Team ▾ > Change team colour...** or the command **Rebel Bot Swarm: Change team colour**. Each team card carries a
+  stripe in its team colour. Setting `rebelBotSwarm.teams` takes an optional `color`.
+- **Delete team** (Team ▾ menu or command): the team goes and its members leave it. No card is deleted; its
+  sub-teams become teams of their own.
+- **Sub-teams** (one level). Create team asks **Is it part of another team?**; a sub-team shows under its parent
+  (dashed header, "part of ..."), can take members from its parent, and shows in the parent team's window. Its
+  leader links to the parent's leader in Network view. Setting `teams` takes an optional `parent`.
+- Fixed: the hand-over lines of Network view stayed drawn on the cards after switching back to card view. Lines now
+  show in Network view only.
+- Save team / Restore team keep the new `added` cards, team colours and sub-teams.
+
+## 0.5.0
+- **Create team... and Team ▾ buttons** at the top, beside Save team and Restore team. Create team asks for the
+  name, lets you tick its members (cards with no team yet; members of other teams are not moved), its leader and its
+  scope, then can show the new team in this window. **Team ▾** (shown once a team exists) switches the window between
+  the whole swarm and one team. The commands are now **Create team** and **Switch team**.
+- **Teams inside the swarm.** New user setting `rebelBotSwarm.teams` (`[{name, leader, scope}]`, max 12) and command
+  **Rebel Bot Swarm: Add team**. Each card's edit panel has a **Team** and a **Role** box (roles: Team leader + the new
+  setting `rebelBotSwarm.roles`). The dashboard groups the cards: swarm leader first (above all teams), then each team
+  with its leader first and its scope line on the header, then No team. Cards show a TEAM LEAD badge or their role.
+  Network view: swarm leader in the middle, team leaders on an inner ring, each team's members together, dotted team
+  lines in the team colour.
+- **One team per window.** New workspace setting `rebelBotSwarm.team` and command **Rebel Bot Swarm: Show one team in
+  this window**: that window shows the swarm leader + one team, and **Spark** starts that team's leader.
+- **Several windows, one team file.** A member save is refused if another window saved the same member since the card
+  was opened. Each window writes members.json through its own temp file.
+
+## 0.4.2
+- **Spark opens beside the dashboard.** The new Claude Code chat now opens in the editor group to the RIGHT of the
+  dashboard, so the dashboard stays in view. If that group is there already, it is used again (no new split on each
+  click). Decide uses the same place when it opens the leader's chat. If the dashboard is not open, or the Claude
+  Code command fails, the chat opens in Claude Code's default place.
+- **Condense button on each card** (cards with an open chat). It works only when the chat is safe to condense or
+  restart: idle, no helper it started still running, nothing waiting, no open board item names the member, board job not still running (the tooltip says
+  why when it is off). The card shows the chat's context size; the button is orange and pulses when the chat is large
+  (new setting `rebelBotSwarm.condenseTokens`, default 250000) or the board job says done. Click: choose **Condense**
+  (`/compact`) or **Restart** (new chat). The member first saves its lessons to its brain: the BRAIN SAVE prompt (new
+  setting `rebelBotSwarm.condensePrompt`) goes on the clipboard and the member's chat comes to the front; a
+  `CONDENSE <time>.json` request file goes to the requests folder.
+
 ## 0.4.1
 - **Decide button fixed (request file first, toast, output channel).** A click now writes the `DECIDE <time>.json`
   request file FIRST, then tries to open the leader's chat. Every click shows one VS Code notice: `Decide sent to

@@ -10,8 +10,8 @@ and on the dashboard until you hide it):
 1. **Open and close the dashboard:** click **Swarm** in the status bar (bottom left) to open it, and again to close
    it. Or use the **Rebel Bot Swarm** icon in the activity bar (left edge: buttons and a 3-line status), the keys
    **Ctrl+Alt+S** (Windows, Linux), or the command **Rebel Bot Swarm: Toggle dashboard**.
-2. **Name your leader, then press Spark:** type your team leader's name in **Start here** (default "Coordinator").
-   The big **Spark** button (it shows the leader's name) opens a new Claude Code chat with a starter prompt in the
+2. **Name your leader, then press OPEN:** type your team leader's name in **Start here** (default "Coordinator").
+   The **OPEN** button (it shows the name on the leader's card, for example OPEN OBI) opens a new Claude Code chat with a starter prompt in the
    chat box. Press Enter, then say what you want to do. The chat hands the task to the right member (a subagent from
    `~/.claude/agents`) or writes a request file for your coordinator.
 3. **Close chat tabs when the job is handed over:** the dashboard keeps watching your team.
@@ -26,15 +26,18 @@ and on the dashboard until you hide it):
 
 - **Summary tiles:** members working, waiting for you, idle or ready, jobs done today, messages today, and the
   holder of the shared slot.
-- **A card for each session:** an original cartoon avatar chosen by the member's role, its status (working, idle,
-  ready, waiting for you, closed), the time of the last change, its job, and the files it holds. Idle, ready and
-  closed members show as grey cards, so the busy members stand out.
+- **A small card for each session:** an original cartoon avatar chosen by the member's role, its name, its status
+  (working, idle, ready, waiting for you, closed) with the time of the last change, and its role or TEAM LEAD tag.
+  A team member's card has a stripe in the team colour. Click a card for the full view: its job, the files it holds
+  and the Condense button. Idle, ready and closed members show as grey cards, so the busy members stand out.
 - **Edit a member:** click a card to change the name on the panel and the avatar (14 drawn styles or your own
   pictures), and to give a next task or new role instructions. The task and role instructions are saved as a request
   file for your coordinator session. The panel never edits your agent files.
-- **Add team member:** saves a request for a new member (name and job) for your coordinator session.
-- **Closed sessions:** a closed tab ends the session. Its card says "reopen this session to send it work" and shows
-  how to reopen it.
+- **Add team member:** the new card shows on the dashboard at once (as ready), and a request with its name and job is
+  saved for your coordinator session to set it up. Each card is known by the first word of its name, so start a new
+  name with a word no other card starts with.
+- **Closed sessions:** a closed tab ends the session. Its card is grey, and its full view (click the card)
+  says how to reopen it.
 - **The shared slot:** which member holds a shared app (from your board).
 - **Waiting for you:** the open questions from your board.
 - **Working window:** who is working now and the current step, recent progress lines, the messages between members
@@ -43,6 +46,8 @@ and on the dashboard until you hide it):
 - **Comms lines:** when one member hands over to another, a glowing line with a moving pulse runs from the sender's
   avatar to the receiver's and fades after about 15 seconds. Recent links stay as faint lines. Tick **Network view**
   to see the members as nodes on a ring, with the busiest one in the middle.
+- **Tokens (top row):** a small pop-out with each member's token use today and the team total, read from the
+  `usage` fields Claude Code writes in the chat transcripts (each reply counted once; "not known" when there is none).
 - **Brain and Digest (edit panel):** the member's own Markdown notes (Claude Code's subagent memory if you use the
   `memory:` field in the agent file, else a file in the brains folder), and a Digest box to give the member a text,
   link or file to learn. The Digest box saves a request file for your coordinator session.
@@ -50,7 +55,10 @@ and on the dashboard until you hide it):
 The avatars are our own designs: space crew, two alien species of our own, helper robots, and the **Rebel crew**
 set of flat geometric faces and bots (pilot, mechanic, CAD engineer, drafter, coordinator, admin, researcher, teacher,
 personal assistant, navigator, helper droid, scout bot), each with a prop for its role. In the edit panel, pick one
-from the avatar dropdown or use **Upload picture...** (PNG, JPEG or WebP, max 2 MB). Roles come from words in the member's name or job (for example Coordinator, CAD, Drawings, Research, Admin,
+from the avatar dropdown, use **Upload picture...** (PNG, JPEG or WebP, max 2 MB), or **Create...** (Botify): paste,
+drop or choose a photo, drag the circle onto the face and press Botify for a flat cartoon head you can adjust (skin,
+hair, beard, eyes, glasses). The photo is read inside the dashboard and never leaves your computer; only the drawing
+is saved, as a new BOTIFY file in the avatars folder. Roles come from words in the member's name or job (for example Coordinator, CAD, Drawings, Research, Admin,
 Teacher, Personal). Other members get a crew look chosen from a hash of the name.
 
 ![Edit a member](https://raw.githubusercontent.com/simonjamesfowler-ux/rebel-bot-swarm/main/docs/screenshot-edit.png)
@@ -74,9 +82,9 @@ Teacher, Personal). Other members get a crew look chosen from a hash of the name
   extension, or to the files and folders you set.
 - **Save team** writes one `.zip` file where you choose. **Restore team** writes only after you say yes.
 
-## Spark
+## OPEN (start your team leader)
 
-**Spark** (dashboard button, command **Rebel Bot Swarm: Spark a new chat**) opens a new Claude Code chat with the
+**OPEN** (dashboard button, command **Rebel Bot Swarm: Open the team leader in a new chat**) opens a new Claude Code chat with the
 starter prompt from the setting `rebelBotSwarm.sparkPrompt` in the chat box. It is not sent until you press Enter.
 The default prompt makes the chat your team leader: it says "Hi, I'm (leader name). What would you like to do?", hands
 the task to a matching subagent or writes one `REQUEST <time>.json` file in the requests folder, and tells you when
@@ -85,13 +93,57 @@ you can close the tab. Edit the setting to change it (`{leader}`, `{leaderRole}`
 
 **Your team leader:** set the name in **Start here** on the dashboard, with the command **Rebel Bot Swarm: Set leader
 name**, or in the settings `rebelBotSwarm.leaderName` (default "Coordinator", for example "Ada") and
-`rebelBotSwarm.leaderRole` (default "the team leader and coordinator"). The **Spark** button shows the name. The
+`rebelBotSwarm.leaderRole` (default "the team leader and coordinator"). The **OPEN** button shows the name on the leader's card (narrow windows show the first word; the tooltip has the full name). The
 leader card has a violet border and a **LEAD** badge (a violet ring in Network view). It is the card with the
 leader's name (board row or edit-panel name); if there is none, the board row whose job says coordinator or leader;
 if there is none, a new ready card. The new chat tab keeps Claude Code's own name: Claude Code can rename a tab only
 after its first message, and it asks you for the name (command **Claude Code: Rename Session Tab**).
-Spark uses Claude Code commands that are not a public interface. If they do not work, the prompt goes on the
+The new chat opens in the editor group to the right of the dashboard, so the dashboard stays in view (that group is
+used again on the next click). OPEN uses Claude Code commands that are not a public interface. If they do not work, the prompt goes on the
 clipboard and the Claude Code side bar opens: paste the prompt there.
+
+## Condense or restart a chat
+
+Each card with an open chat has a **Condense ▾** button and the chat's context size (for example `300k`). The
+button works only when it is safe: the member is idle (no helper running, none it started still running, not waiting for you), no open "Waiting for"
+item on the board names the member, and the board job does not say it is still running (in progress, working on...).
+Hover over a grey button to see why it is off. The button is orange and pulses when the chat is large (setting
+`rebelBotSwarm.condenseTokens`, default 250000) or the board job says done.
+
+Click it and choose **Condense** (`/compact`) or **Restart** (a new chat). First the member saves what it learned to its
+brain: the BRAIN SAVE prompt (setting `rebelBotSwarm.condensePrompt`) goes on the clipboard and the member's chat comes
+to the front (Claude Code fills the chat box only if the chat was not open). Paste it, send it, and when the member
+replies "BRAIN SAVED", type `/compact` (or close the chat and click **New chat** in the notice). A `CONDENSE <time>.json`
+request file goes to the requests folder for your leader.
+
+## Teams inside the swarm
+
+Split a big swarm into teams. A team can be a colour (`Red`) or a work area (`Website`), with its own leader.
+
+1. Press **Create team...** at the top of the dashboard (or run **Rebel Bot Swarm: Create team**). Type the name,
+   tick its members (cards with no team yet: a member already in a team stays where it is), choose its leader and,
+   a colour, and if you like, one line for what it works on. Then choose **Show it in this window** or **Stay on whole swarm**.
+   The teams are kept in the user setting `rebelBotSwarm.teams`, for example
+   `[{"name": "Website", "leader": "Ada", "scope": "site pages, blog, downloads", "color": "#2563eb"}]`.
+2. To change a member later, click its card. In the edit panel, choose its **Team** and its **Role** (`Team leader`, plus the names in the
+   setting `rebelBotSwarm.roles`, default Member, Specialist, Helper). Save.
+3. The dashboard groups the cards: the swarm leader first (above all teams), then each team with its leader first,
+   then **No team**. In Network view the swarm leader is in the middle, team leaders on an inner ring and each team's
+   members together outside, with dotted team lines in the team colour.
+4. **Sub-teams** (one level): in Create team, answer **Is it part of another team?** with that team. The sub-team
+   shows under its parent, and in Network view its leader hangs from the parent's leader. Create team may move
+   members of the parent team into the sub-team. A window that shows the parent team shows its sub-teams too.
+   In the setting, a sub-team has `"parent": "<team name>"`.
+5. **Change a team's colour** or **delete a team**: press **Team ▾** at the top and choose **Change team colour...** or
+   **Delete team...** (or run **Rebel Bot Swarm: Change team colour** / **Delete team**). Deleting a team only takes
+   its members out of it: every card, name, picture and role stays, and its sub-teams become teams of their own.
+
+**One team per window.** You can have the dashboard open in several VS Code windows. In a window that works for one
+team, press **Team: Whole swarm ▾** at the top (or run **Rebel Bot Swarm: Switch team**) and choose the team (or set `rebelBotSwarm.team` in the *Workspace*
+settings). That window shows the swarm leader and that team only, and **OPEN** starts that team's leader. Empty =
+the whole swarm. The teams list is a user setting and the member data is one shared file, so a change in one window
+shows in the others at the next refresh. A save is refused if the same member was saved in another window since the
+card was opened (open the card again and save).
 
 ## Keep your team safe
 
@@ -136,11 +188,16 @@ Works on Windows, macOS and Linux with VS Code 1.80 or later and Claude Code.
 | `rebelBotSwarm.requestsFolder` | empty | Folder for the request files (Add team member, task, role instructions). Empty = VS Code's storage folder for this extension. |
 | `rebelBotSwarm.membersFile` | empty | File for the names and avatars you choose in the edit panel. Empty = `members.json` in VS Code's storage folder. |
 | `rebelBotSwarm.agentCards` | `false` | Also show a ready card for each agent file in `~/.claude/agents/` that has no card yet. |
-| `rebelBotSwarm.leaderName` | `Coordinator` | Your team leader's name: Spark opens the chat as this leader; the leader card gets a LEAD badge. |
-| `rebelBotSwarm.leaderRole` | `the team leader and coordinator` | The leader's role in the Spark prompt. |
-| `rebelBotSwarm.sparkPrompt` | (default text) | The Spark starter prompt; `{leader}` and `{leaderRole}` are filled in. |
+| `rebelBotSwarm.leaderName` | `Coordinator` | Your team leader's name: OPEN opens the chat as this leader; the leader card gets a LEAD badge. |
+| `rebelBotSwarm.leaderRole` | `the team leader and coordinator` | The leader's role in the OPEN starter prompt. |
+| `rebelBotSwarm.sparkPrompt` | (default text) | The OPEN starter prompt; `{leader}` and `{leaderRole}` are filled in. |
 | `rebelBotSwarm.leaderSessionId` | (empty) | Your leader's own chat (its session id). **Decide ▸** puts `DECIDE: <item>` in this chat and writes a `DECIDE <time>.json` request file. Empty = the newest chat whose tab title starts with the leader name. |
 | `rebelBotSwarm.decidePrompt` | (default text) | The prompt that **Decide ▸** puts in a new chat when no leader chat is found; `{leader}`, `{leaderRole}`, `{item}`, `{board}`, `{requestsFolder}` are filled in. |
+| `rebelBotSwarm.condenseTokens` | 250000 | A card highlights **Condense** when its chat context is this many tokens or more. |
+| `rebelBotSwarm.condensePrompt` | (default text) | The BRAIN SAVE prompt that **Condense** gives the member before `/compact` or a restart; `{member}`, `{action}`, `{actionPast}`, `{actionNext}` are filled in. |
+| `rebelBotSwarm.teams` | [] | Teams: `[{"name", "leader", "scope", "color", "parent"}]` (user setting, the same in all windows). |
+| `rebelBotSwarm.roles` | Member, Specialist, Helper | The roles in the edit panel; Team leader is always there. |
+| `rebelBotSwarm.team` | (empty) | Workspace setting: the one team this window shows; OPEN starts its leader. Empty = whole swarm. |
 | `rebelBotSwarm.showUnnamedSessions` | `false` | Show a card for a session that still has its default title (the folder name) and is not on the board. |
 
 Command **Rebel Bot Swarm: Open requests folder** opens the folder where the request files are saved.

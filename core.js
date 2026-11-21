@@ -344,6 +344,15 @@ function buildState(cfg, picUri) {
   const settings = loadSettings(cfg.membersFile), idx = agentIndex(cfg.agentsDir === undefined ? AGENTS : cfg.agentsDir);
   const wantedOf = n => { const s = settings[memberId(n)]; return s && typeof s.agent === "string" ? s.agent : ""; };
   if (cfg.agentCards) addAgentCards(members, (n, j) => member(n, j, null, null, b), idx, wantedOf);
+  // 0.5.1: a card made with Add team member (members.json "added") shows at once, until the board has a row for it
+  for (const [k, s] of Object.entries(settings)) {
+    const a = s.added;
+    if (!a || typeof a !== "object" || typeof a.name !== "string" || !a.name.trim() || memberId(a.name) !== k) continue;
+    if (members.some(m => memberId(m.name) === k)) continue;
+    const m = member(a.name.trim().slice(0, NAME_MAX), typeof a.job === "string" ? a.job.slice(0, JOB_MAX) : "", null, null, b);
+    m.extra = "new: waiting for your coordinator to set it up"; m.added = true;
+    members.push(m);
+  }
   // the team leader (setting leaderName): the card with that name or edit-panel name, else the row whose job says
   // coordinator or leader, else a new ready card
   const lname = String(cfg.leaderName || "").trim().slice(0, NAME_MAX), lid = lname ? memberId(lname) : "";
@@ -355,12 +364,16 @@ function buildState(cfg, picUri) {
     if (!leader) { leader = member(lname, String(cfg.leaderRole || "the team leader and coordinator").slice(0, JOB_MAX), null, null, b); members.unshift(leader); }
   }
   for (const m of members) { m.leader = m === leader; if (m.status === "closed") m.status = "ready"; }
+  const teamDefs = teamList(cfg.teams), roleDefs = roleList(cfg.roles);
   const avDir = expandHome(cfg.avatarsFolder), pics = ownPictures(avDir), files = picFiles(avDir), choices = [];
   if (picUri) for (const f of Object.keys(files)) choices.push({ file: f, url: picUri(files[f].p) + "?v=" + files[f].v });
   lastMembers.clear();
   for (const m of members) {
     const mid = memberId(m.name), st = settings[mid] || {};
     m.id = mid; m.style = ""; m.display = (typeof st.name === "string" && st.name.length > 0 && st.name.length <= NAME_MAX) ? st.name : "";
+    const tm = typeof st.team === "string" ? teamDefs.find(t => t.name.toLowerCase() === st.team.toLowerCase()) : null;
+    m.team = tm ? tm.name : ""; m.role = typeof st.role === "string" && roleDefs.includes(st.role) ? st.role : ""; m.teamLead = false;
+    m.rev = memberRev(settings[mid]);
     const ag = matchAgent(m.name, idx, wantedOf(m.name));
     m.agent = ag ? ag.base : "";
     lastMembers.set(mid, { name: m.name, wanted: wantedOf(m.name) });
@@ -375,6 +388,7 @@ function buildState(cfg, picUri) {
   const priv = (cfg.privateMembers || []).map(s => String(s).trim().toLowerCase()).filter(Boolean);
   const isPriv = n => priv.some(p => String(n || "").toLowerCase().includes(p));
   for (const m of members) m.private = isPriv(m.name) || isPriv(m.display);
+  const teams = teamGroups(members, teamDefs);
   const privSids = new Set(members.filter(m => m.sid && m.private).map(m => m.sid));
   const titleNames = {};
   for (const sid of new Set([...titles.keys(), ...Object.keys(names)])) titleNames[sid] = names[sid] || titles.get(sid) || sid.slice(0, 8);
@@ -382,7 +396,8 @@ function buildState(cfg, picUri) {
   const byName = n => { const f = firstWord(n); return members.find(m => m.name === n || m.display === n) || members.find(m => f && firstWord(m.name) === f) || null; };
   const msgs = [];   // {ts, from, to, text, kind, fromId?, toId?}
   // helpers (subagents): who works now, their steps, the brief from the coordinator and the hand-back
-  const working = [], steps = [], helperIds = {};
+  const working = [], steps = [], helperIds = {}, busyParents = new Set();
+  const tokHelpers = [];   // 0.5.1 token use: each helper transcript and the card it belongs to ("" = no card)
   for (const { p, st, parent } of helperFiles(dirs)) {
     const h = helperInfo(p, st);
     if (!h) continue;
@@ -394,7 +409,9 @@ function buildState(cfg, picUri) {
     const age = Date.now() - st.mtimeMs, running = !h.finished && age < (h.hasMeta ? RUN_SECS : HELPER_SECS) * 1000;
     const last = h.steps[h.steps.length - 1];
     helperIds[path.basename(p, ".jsonl").replace(/^agent-/, "")] = { who, id: m ? m.id : "", hide };
+    tokHelpers.push({ p, id: m ? m.id : "" });
     if (running) {
+      busyParents.add(parent);
       working.push({ who, id: m ? m.id : "", task: hide ? "(private)" : h.task, step: hide ? "" : (last ? last.text : "starting"),
                      time: last ? fmt(new Date(last.ts)) : fmt(new Date(st.mtimeMs)), ts: last ? last.ts : new Date(st.mtimeMs).toISOString() });
       if (m && (m.status === "ready" || m.status === "idle")) {
@@ -422,11 +439,26 @@ function buildState(cfg, picUri) {
     out.push({ time: isNaN(d) ? x.ts : fmt(d), ts: x.ts, from: x.from, to: x.to, text: x.text, kind: x.kind });
     if (fm && tm && fm !== tm && !isNaN(d)) links.push({ from: fm.id, to: tm.id, ts: d.getTime(), kind: x.kind });
   }
+  condenseInfo(members, dirs, b.waiting, cfg.condenseTokens, busyParents);
+  // 0.5.1 saved settings whose key matches no card: kept in members.json and listed, never dropped
+  const cardIds = new Set(members.map(m => m.id)), orphans = Object.entries(settings).filter(([k]) => !cardIds.has(k)).map(([k, v]) => ({ key: k,
+    name: typeof v.name === "string" ? v.name : (v.added && typeof v.added.name === "string" ? v.added.name : ""), team: typeof v.team === "string" ? v.team : "",
+    role: typeof v.role === "string" ? v.role : "", avatar: typeof v.avatar === "string" ? v.avatar : "" }));
+  lastTok = { dirs, helpers: tokHelpers, members: members.map(m => ({ id: m.id, name: m.display || m.name, sid: m.sid || "", team: m.team || "", private: !!m.private })) };
   const log = b.log.slice(-40).reverse().map(l => ({ date: l.date, who: l.who, text: isPriv(l.who) || isPriv(l.text) ? "(private)" : l.text }));
   const now = new Date();
+  // a team window (setting team): the swarm leader + that team's cards; the board, feed and log stay swarm-wide
+  // a parent team's window also shows its sub-teams
+  const vt = viewTeam(teams, cfg.team), subs = vt ? teams.filter(t => t.parent === vt.name) : [];
+  const keepIds = vt ? new Set([...vt.ids, ...subs.flatMap(t => t.ids), ...members.filter(m => m.leader).map(m => m.id)]) : null;
+  const shownMembers = keepIds ? members.filter(m => keepIds.has(m.id)) : members;
+  const shownTeams = vt ? [vt, ...subs] : teams;
+  const shownLinks = keepIds ? links.filter(l => keepIds.has(l.from) && keepIds.has(l.to)) : links;
+  const shownWorking = keepIds ? working.filter(w => w.id && keepIds.has(w.id)) : working;
   return { updated: `${p2(now.getHours())}:${p2(now.getMinutes())}:${p2(now.getSeconds())}`, now: now.getTime(), holder: b.holder, waiting: b.waiting,
-           board: b.found, members, feed: out, links: links.slice(0, 80), working: working.sort(desc), steps: steps.sort(desc).slice(0, 40), log,
-           pics: choices, styles: STYLES, avatarsSet: !!avDir, leaderName: lname };
+           view: vt ? vt.name : "", viewMissing: !vt && !!String(cfg.team || "").trim() ? String(cfg.team).trim() : "",
+           board: b.found, members: shownMembers, feed: out, links: shownLinks.slice(0, 80), working: shownWorking.sort(desc), steps: steps.sort(desc).slice(0, 40), log,
+           orphans, pics: choices, styles: STYLES, avatarsSet: !!avDir, leaderName: lname, teams: shownTeams, allTeams: teams.map(t => t.name), teamParents: Object.fromEntries(teams.filter(t => t.parent).map(t => [t.name, t.parent])), roles: roleDefs };
 }
 
 // ---- edit panel: name and avatar (members.json), task and role instructions (a request file for the coordinator)
@@ -519,6 +551,25 @@ function brainInfo(mid, opts, hidden) {
   }
   return { id: mid, found: true, file: b.file, kind: b.kind, scope: b.scope, exists: b.exists, private: !!hidden, text };
 }
+/** 0.5.1 "Open brain folder" (Simon, 21 Nov): the folder of the member's brain. When it is not there yet it is made,
+ * with an empty MEMORY.md (or the panel's brain file), never over a file. Returns { ok, dir, made, msg }. */
+function brainFolder(mid, opts) {
+  const b = brainFor(mid, opts);
+  if (!b || !b.file) return { ok: false, msg: "No brain place for this member." };
+  const dir = path.dirname(b.file);
+  let made = false;
+  try {
+    if (!fs.existsSync(b.file)) {
+      fs.mkdirSync(dir, { recursive: true });
+      const lm = lastMembers.get(mid);
+      fs.writeFileSync(b.file, b.kind === "panel" ? `# ${lm ? lm.name : mid}: brain
+
+` : "", { encoding: "utf8", flag: "wx" });
+      made = true;
+    }
+  } catch (e) { if (e.code !== "EEXIST") return { ok: false, msg: "Not made: " + (e.code || "write error") + "." }; }
+  return { ok: true, dir, made, msg: made ? "Brain folder made (empty " + path.basename(b.file) + ") and opened." : "Brain folder opened." };
+}
 /** Makes an EMPTY brain file in the brains folder (never in Claude Code's own memory folders, never over a file). */
 function createBrain(mid, opts) {
   const b = brainFor(mid, opts);
@@ -549,6 +600,24 @@ function freeName(dir, base, ext) {
 const MAGIC = { ".png": b => b.slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])),
                 ".jpg": b => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff,
                 ".webp": b => b.slice(0, 4).toString("latin1") === "RIFF" && b.slice(8, 12).toString("latin1") === "WEBP" };
+/** 0.5.1 Botify: saves the cartoon avatar the dashboard drew (an SVG made by the page itself) as a NEW file in the
+ * avatars folder ("BOTIFY <name>.svg", never over a file). Only plain drawing is accepted: no script, no event
+ * attributes, no links or embedded files, max 200 KB. The photo it was made from never leaves the page. */
+const BOT_MAX = 200000;
+function saveBotify(svg, name, avatarsFolder) {
+  const dir = expandHome(avatarsFolder);
+  if (!dir) return { ok: false, msg: "Not saved: no avatars folder." };
+  const t = String(svg || "");
+  if (!t || t.length > BOT_MAX) return { ok: false, msg: "Not saved: the drawing is empty or too large." };
+  if (!/^<svg [^>]*xmlns="http:\/\/www\.w3\.org\/2000\/svg"/.test(t) || !/<\/svg>\s*$/.test(t)) return { ok: false, msg: "Not saved: not an avatar drawing." };
+  if (/<script|<foreignObject|<image|<iframe|<use|\son[a-z]+\s*=|href\s*=|javascript:|data:|@import|url\((?!#)/i.test(t)) return { ok: false, msg: "Not saved: the drawing holds something other than shapes." };
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+    const fn = freeName(dir, safeName("BOTIFY " + String(name || "member") + ".svg", "BOTIFY avatar"), ".svg");
+    fs.writeFileSync(path.join(dir, fn), t, { encoding: "utf8", flag: "wx" });
+    return { ok: true, file: fn, msg: "Avatar made: " + fn + ". Click Save to keep it for this member." };
+  } catch (e) { return { ok: false, msg: "Not saved: " + (e.code || "write error") + "." }; }
+}
 /** Upload picture: copies one PNG, JPEG or WebP (max 2 MB, checked by its first bytes) into the avatars folder. */
 function savePicture(src, avatarsFolder) {
   const dir = expandHome(avatarsFolder);
@@ -607,6 +676,23 @@ function digestRequest(data, known, opts, attachPath) {
   lastRequest = Date.now();
   return { ok: true, msg: "Digest request saved for your coordinator" + (attachment ? " (with the file)" : "") };
 }
+/** 0.5.1 gives the saved settings of a key that matches no card to the card the user chose. members.json is backed up
+ * first (writeMembers); the card keeps anything the saved settings do not set; the old key is removed. */
+function moveSettings(from, to, known, opts) {
+  const mf = opts && opts.membersFile;
+  if (!mf) return { ok: false, msg: "Not moved: no members file." };
+  if (typeof to !== "string" || !known.includes(to)) return { ok: false, msg: "Not moved: choose a card." };
+  if (typeof from !== "string" || known.includes(from)) return { ok: false, msg: "Not moved: those settings already belong to a card." };
+  let settings;
+  try { settings = JSON.parse(fs.readFileSync(mf, "utf8")); } catch (e) { return { ok: false, msg: "Not moved: members file unreadable." }; }
+  const src = settings[from];
+  if (!src || typeof src !== "object") return { ok: false, msg: "Not moved: those settings are not there any more." };
+  const merged = { ...(settings[to] && typeof settings[to] === "object" ? settings[to] : {}), ...src };
+  delete merged.added;   // an Add-member note belongs to its old name only
+  settings[to] = merged; delete settings[from];
+  try { writeMembers(settings, mf); } catch (e) { return { ok: false, msg: "Not moved: " + (e.code || "write error") + "." }; }
+  return { ok: true, msg: `Saved settings "${from}" now belong to this card (members.json backed up first).` };
+}
 function writeMembers(settings, file) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   if (fs.existsSync(file)) {
@@ -617,8 +703,9 @@ function writeMembers(settings, file) {
     while (fs.existsSync(b)) b = path.join(bdir, `members BACKUP ${t} (${++n}).json`);
     fs.copyFileSync(file, b, fs.constants.COPYFILE_EXCL);
   }
-  fs.writeFileSync(file + ".tmp", JSON.stringify(settings, null, 2), "utf8");
-  fs.renameSync(file + ".tmp", file);
+  const tmp = `${file}.${process.pid}.tmp`;   // own temp name per window: two windows never share it
+  fs.writeFileSync(tmp, JSON.stringify(settings, null, 2), "utf8");
+  fs.renameSync(tmp, file);
 }
 let lastRequest = 0;
 /** data: {member, name, avatar, task, role_instructions}; known: member ids the panel shows now.
@@ -638,17 +725,27 @@ function editMember(data, known, opts) {
   const picOk = typeof av === "string" && av.startsWith("pic:") && !!picFiles(avDir)[av.slice(4)];
   if (!(av === "auto" || (typeof av === "string" && av.startsWith("style:") && STYLES.includes(av.slice(6))) || picOk)) return { ok: false, msg: "Not saved: unknown avatar." };
   const settings = loadSettings(mf), entry = {}, old = settings[mid] || {};
+  // shared file, several windows: refuse a save based on an older copy of this member (another window saved since)
+  if (typeof d.rev === "string" && d.rev && d.rev !== memberRev(settings[mid]))
+    return { ok: false, msg: "Not saved: this member was changed in another window. Close and open the card again, then save." };
   if (typeof old.agent === "string" && old.agent) entry.agent = old.agent;   // the agent-file link stays
+  if (old.added && typeof old.added === "object") entry.added = old.added;   // an Add team member card stays
+  const team = d.team === undefined ? (typeof old.team === "string" ? old.team : "") : String(d.team || "");
+  const rl = d.role === undefined ? (typeof old.role === "string" ? old.role : "") : String(d.role || "");
+  if (team && !teamList(opts.teams).some(t => t.name === team)) return { ok: false, msg: "Not saved: unknown team." };
+  if (rl && !roleList(opts.roles).includes(rl)) return { ok: false, msg: "Not saved: unknown role." };
+  if (team) entry.team = team;
+  if (rl) entry.role = rl;
   if (name) entry.name = name;
   if (av !== "auto") entry.avatar = av;
   const canon = o => JSON.stringify(Object.keys(o).sort().map(k => [k, o[k]]));
   const changed = canon(entry) !== canon(old);
   const sendReq = !!task || (!!role && role !== roleBody(mid, opts.agentsDir).body);
-  if (!changed && !sendReq) return { ok: false, msg: "Nothing to save: change the name, avatar, task or role instructions first." };
+  if (!changed && !sendReq) return { ok: false, msg: "Nothing to save: change the name, avatar, team, role, task or role instructions first." };
   if (Date.now() - lastRequest < 5000) return { ok: false, msg: "Not saved: wait 5 seconds between requests." };
   const done = [], t = stamp();
   try {
-    if (changed) { if (Object.keys(entry).length) settings[mid] = entry; else delete settings[mid]; writeMembers(settings, mf); done.push("Name and avatar saved"); }
+    if (changed) { if (Object.keys(entry).length) settings[mid] = entry; else delete settings[mid]; writeMembers(settings, mf); done.push("Name, avatar, team and role saved"); }
     if (sendReq) {
       fs.mkdirSync(reqDir, { recursive: true });
       fs.writeFileSync(path.join(reqDir, `EDIT MEMBER ${t.file}.json`),
@@ -660,6 +757,28 @@ function editMember(data, known, opts) {
   return { ok: true, msg: done.join(". ") };
 }
 
+/** Create team: put members with NO team yet into a team (one write, one backup). A member already in a team is left as it is.
+ *  ids: member ids; opts: {membersFile, teams}. Returns {ok, msg, joined: [ids]}. */
+function joinTeam(ids, team, opts) {
+  opts = opts || {};
+  const mf = opts.membersFile;
+  if (!mf) return { ok: false, msg: "Not saved: no storage folder.", joined: [] };
+  if (!teamList(opts.teams).some(t => t.name === team)) return { ok: false, msg: "Not saved: unknown team.", joined: [] };
+  const want = [...new Set((Array.isArray(ids) ? ids : []).filter(x => typeof x === "string" && x))];
+  if (!want.length) return { ok: true, msg: "No members chosen.", joined: [] };
+  const settings = loadSettings(mf), joined = [];
+  for (const mid of want) {
+    const old = settings[mid] && typeof settings[mid] === "object" ? settings[mid] : {};
+    if (typeof old.team === "string" && old.team && !(opts.from && old.team === opts.from)) continue;   // keep other teams exactly as they are (a sub-team may take from its parent: opts.from)
+    settings[mid] = { ...old, team };
+    joined.push(mid);
+  }
+  if (!joined.length) return { ok: true, msg: "Those members are in a team already: nothing changed.", joined };
+  try { writeMembers(settings, mf); }
+  catch (e) { return { ok: false, msg: "Not saved: " + (e.code || "write error") + ".", joined: [] }; }
+  return { ok: true, msg: `${joined.length} member${joined.length === 1 ? "" : "s"} added to ${team}.`, joined };
+}
+
 // ADD TEAM MEMBER: one file "NEW MEMBER <yyyy-mm-dd HHMMSS>.json" in the requests folder.
 // The file name uses the time only; JSON.stringify escapes the typed text.
 function clean(t, limit) {
@@ -667,13 +786,27 @@ function clean(t, limit) {
   t = t.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "").replace(/\s+/g, " ").trim();
   return t && t.length <= limit ? t : null;
 }
-function newMemberRequest(data, requestsFolder) {
+/** opts (0.5.1): {membersFile, known: ids of the cards shown now}. With a membersFile the new card is saved there too
+ *  (members.json "added": {name, job, time}), so it shows on the dashboard at once. */
+function newMemberRequest(data, requestsFolder, opts) {
+  opts = opts || {};
   const dir = expandHome(requestsFolder);
   if (!dir) return { ok: false, msg: "Not saved: no requests folder." };
   const name = clean(data && data.name, NAME_MAX), job = clean(data && data.job, JOB_MAX);
   if (!name || !job) return { ok: false, msg: `Not saved: type a name (max ${NAME_MAX}) and the job (max ${JOB_MAX} characters).` };
+  const id = memberId(name);
+  if (!id || !MEMBER_ID.test(id)) return { ok: false, msg: "Not saved: start the name with a letter or a number, and use only letters, numbers, dots and dashes in its first word." };
+  // a card is keyed by the first word of its name: a second card with the same first word cannot show on its own
+  if ((opts.known || []).includes(id)) return { ok: false, msg: `Not saved: a card whose name starts with "${id}" is there already. Start the name with another word.` };
   if (Date.now() - lastRequest < 5000) return { ok: false, msg: "Not saved: wait 5 seconds between requests." };
   const t = stamp();
+  if (opts.membersFile) {
+    try {
+      const settings = loadSettings(opts.membersFile), old = settings[id] || {};
+      settings[id] = { ...old, added: { name, job, time: t.iso } };
+      writeMembers(settings, opts.membersFile);
+    } catch (e) { return { ok: false, msg: "Not saved: " + (e.code || "write error") + "." }; }
+  }
   try {
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, `NEW MEMBER ${t.file}.json`), JSON.stringify({ name, job, time: t.iso, from: "Rebel Bot Swarm" }, null, 2),
@@ -682,7 +815,164 @@ function newMemberRequest(data, requestsFolder) {
     return { ok: false, msg: e.code === "EEXIST" ? "Not saved: wait a second and try again." : "Not saved: " + (e.code || "write error") + "." };
   }
   lastRequest = Date.now();
-  return { ok: true, msg: "Request saved for your coordinator" };
+  return { ok: true, id, msg: opts.membersFile ? "Card added. Request saved for your coordinator" : "Request saved for your coordinator" };
+}
+
+/** Delete team (0.5.1): clear "team" from every member of that team (one write, one backup). Cards are kept.
+ *  The teams setting itself is changed by the extension. Returns {ok, msg, left: [ids]}. */
+function leaveTeam(team, opts) {
+  opts = opts || {};
+  const mf = opts.membersFile, n = String(team || "").trim().toLowerCase();
+  if (!mf) return { ok: false, msg: "Not saved: no storage folder.", left: [] };
+  if (!n) return { ok: false, msg: "Not saved: no team named.", left: [] };
+  const settings = loadSettings(mf), left = [];
+  for (const [mid, v] of Object.entries(settings)) {
+    if (typeof v.team !== "string" || v.team.trim().toLowerCase() !== n) continue;
+    const e = { ...v }; delete e.team;
+    if (Object.keys(e).length) settings[mid] = e; else delete settings[mid];
+    left.push(mid);
+  }
+  if (!left.length) return { ok: true, msg: "No member was in that team.", left };
+  try { writeMembers(settings, mf); }
+  catch (e) { return { ok: false, msg: "Not saved: " + (e.code || "write error") + ".", left: [] }; }
+  return { ok: true, msg: `${left.length} member${left.length === 1 ? "" : "s"} left the team and kept their cards.`, left };
+}
+
+// ---- Teams (subgroups): setting teams = [{ name, leader, scope }], roles = extra role names. A member joins a team
+// and gets a role in the edit panel (members.json "team", "role"). The swarm leader stays above all teams.
+const MEMBER_ID = /^[a-z0-9][a-z0-9._-]{0,59}$/;   // the same keys Save team / Restore team keep
+const TEAM_LEAD = "Team leader", TEAM_MAX = 12, HEX = /^#[0-9a-fA-F]{6}$/;
+// 0.5.1 team colours: a team's own "color" (#rrggbb), else this list by its place in the teams setting
+const TEAM_COLOURS = [["Red", "#e11d48"], ["Blue", "#2563eb"], ["Green", "#16a34a"], ["Amber", "#d97706"], ["Violet", "#7c3aed"], ["Cyan", "#0891b2"],
+  ["Pink", "#db2777"], ["Lime", "#65a30d"], ["Orange", "#ea580c"], ["Indigo", "#4f46e5"], ["Teal", "#0d9488"], ["Purple", "#9333ea"]];
+function teamList(v) {
+  const out = [], seen = new Set();
+  for (const t of Array.isArray(v) ? v : []) {
+    const o = typeof t === "string" ? { name: t } : t && typeof t === "object" ? t : null;
+    const name = o && typeof o.name === "string" ? o.name.replace(/\s+/g, " ").trim().slice(0, 40) : "";
+    if (!name || seen.has(name.toLowerCase()) || out.length >= TEAM_MAX) continue;
+    seen.add(name.toLowerCase());
+    out.push({ name, leader: typeof o.leader === "string" ? o.leader.trim().slice(0, NAME_MAX) : "",
+               scope: typeof o.scope === "string" ? o.scope.replace(/\s+/g, " ").trim().slice(0, 160) : "",
+               color: typeof o.color === "string" && HEX.test(o.color.trim()) ? o.color.trim().toLowerCase() : "",
+               parent: typeof o.parent === "string" ? o.parent.replace(/\s+/g, " ").trim().slice(0, 40) : "" });
+  }
+  // 0.5.1 sub-teams, one level: "parent" must name another team that has no parent itself, else it is ignored
+  const top = new Map(out.map(t => [t.name.toLowerCase(), t]));
+  const raw = new Map(out.map(t => [t.name, t.parent]));
+  for (const t of out) {
+    const p = t.parent ? top.get(t.parent.toLowerCase()) : null;
+    t.parent = p && p !== t && !raw.get(p.name) ? p.name : "";
+  }
+  return out;
+}
+function roleList(v) {
+  const out = [TEAM_LEAD];
+  for (const r of Array.isArray(v) ? v : ["Member", "Specialist", "Helper"]) {
+    const t = typeof r === "string" ? r.replace(/\s+/g, " ").trim().slice(0, 30) : "";
+    if (t && !out.some(x => x.toLowerCase() === t.toLowerCase()) && out.length < 20) out.push(t);
+  }
+  return out;
+}
+/** Name keys of a card: name, edit-panel name and their short forms ("Ann Lee" of "Ann Lee - CAD"). */
+const nameKeys = m => [m.name, m.display].filter(Boolean).flatMap(n => { const l = String(n).trim().toLowerCase(); return [l, l.split(" - ")[0].split(" (")[0].trim()]; });
+/** Team leader = the card named in the team's "leader" setting (it joins the team), else the first team card with the
+ * role Team leader. The swarm leader is never in a team. Returns [{ name, scope, leaderId, ids }] in setting order. */
+function teamGroups(members, defs) {
+  for (const m of members) if (m.leader) { m.team = ""; m.teamLead = false; }
+  const out = [];
+  for (const [k, t] of defs.entries()) {
+    const want = t.leader.toLowerCase();
+    let lead = want ? members.find(m => !m.leader && nameKeys(m).includes(want)) : null;
+    if (lead && lead.team && lead.team !== t.name) lead = null;   // a card leads only its own team
+    if (lead) lead.team = t.name;
+    if (!lead) lead = members.find(m => m.team === t.name && m.role === TEAM_LEAD) || null;
+    if (lead) { lead.teamLead = true; if (!lead.role) lead.role = TEAM_LEAD; }
+    const ids = members.filter(m => m.team === t.name && m !== lead).map(m => m.id);
+    out.push({ name: t.name, scope: t.scope, leader: t.leader, parent: t.parent, color: t.color || TEAM_COLOURS[k % TEAM_COLOURS.length][1], leaderName: lead ? (lead.display || lead.name) : t.leader,
+               leaderId: lead ? lead.id : "", ids: lead ? [lead.id, ...ids] : ids });
+  }
+  // each sub-team straight after its parent team (colours were given by place in the setting, above)
+  const tops = out.filter(t => !t.parent);
+  return tops.flatMap(t => [t, ...out.filter(x => x.parent === t.name)]);
+}
+/** The team a window shows (workspace setting team), or null = the whole swarm. */
+function viewTeam(teams, name) {
+  const n = String(name || "").trim().toLowerCase();
+  return n ? teams.find(t => t.name.toLowerCase() === n) || null : null;
+}
+/** A short version stamp of one member's saved settings: the page sends it back on Save, so a save made in another
+ * window in the meantime is not overwritten (members.json is shared by all windows). */
+const memberRev = o => crypto.createHash("md5").update(JSON.stringify(o && typeof o === "object" ? Object.keys(o).sort().map(k => [k, o[k]]) : [])).digest("hex").slice(0, 10);
+
+// ---- Condense / Restart: a member's chat may be condensed (/compact) or restarted only when it is safe.
+const CTX_TAIL = 600000, ctxCache = new Map();   // file -> { size, mtime, tokens }
+/** Context size of a chat now: input + cache tokens of the last main-chain assistant reply (0 = not known). */
+function contextTokens(sid, dirs) {
+  if (!/^[0-9a-f-]{36}$/i.test(String(sid || ""))) return 0;
+  for (const dir of dirs) {
+    const file = path.join(dir, sid + ".jsonl");
+    let st;
+    try { st = fs.statSync(file); } catch (e) { continue; }
+    const c = ctxCache.get(file);
+    if (c && c.size === st.size && c.mtime === st.mtimeMs) return c.tokens;
+    let tokens = 0, fd;
+    try {
+      const len = Math.min(st.size, CTX_TAIL), buf = Buffer.alloc(len);
+      fd = fs.openSync(file, "r"); fs.readSync(fd, buf, 0, len, st.size - len);
+      const lines = buf.toString("utf8").split("\n");
+      for (let i = lines.length - 1; i >= 0; i--) {
+        const ln = lines[i];
+        if (!ln.includes('"usage"') || !ln.includes('"assistant"')) continue;
+        let e; try { e = JSON.parse(ln); } catch (x) { continue; }
+        if (e.type !== "assistant" || e.isSidechain) continue;
+        const u = (e.message || {}).usage;
+        if (!u) continue;
+        tokens = (u.input_tokens || 0) + (u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0);
+        break;
+      }
+    } catch (e) { tokens = 0; } finally { if (fd !== undefined) try { fs.closeSync(fd); } catch (x) { /* closed */ } }
+    ctxCache.set(file, { size: st.size, mtime: st.mtimeMs, tokens });
+    return tokens;
+  }
+  return 0;
+}
+const STOP = new Set(["the", "and", "for", "new", "our", "your", "team", "all", "one", "two", "this", "that", "with", "from", "main", "chat", "task", "job", "app"]);
+const JOB_OPEN = /\b(in progress|working on|doing|wip|started|running|busy)\b/i, JOB_DONE = /\b(done|finished|complete[d]?|handed back)\b/i;
+/** Sets m.ctx (tokens), m.canCondense, m.condenseWhy (why not, or why now) and m.condenseNow (suggest it) on each card.
+ * Safe = an open chat, no helper it started still running, status idle (no helper running, not waiting for you), no open board item names the member,
+ * and the board job does not say it is still running. Suggest = safe and (context >= limit or the job says done). */
+function condenseInfo(members, dirs, waiting, limit, busyParents) {
+  const lim = Number(limit) > 0 ? Number(limit) : 250000;
+  for (const m of members) {
+    m.ctx = m.sid ? contextTokens(m.sid, dirs) : 0;
+    // the member's short name ("Ann Lee" of "Ann Lee - CAD") or its first word, if that word is a real name
+    const keys = [m.display, m.name].filter(Boolean).flatMap(n => { const s = String(n).split(" - ")[0].split(" (")[0].toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+      const f = s.split(" ")[0] || ""; return [s, f.length >= 3 && !STOP.has(f) ? f : ""]; }).filter(Boolean);
+    const named = (waiting || []).some(w => { const t = " " + String(w).toLowerCase().replace(/[^a-z0-9]+/g, " ") + " ";
+      return keys.some(k => t.includes(" " + k + " ")); });
+    const why = !m.sid ? "no open chat" : busyParents && busyParents.has(m.sid) ? "a helper it started is still running" : m.status !== "idle" ? `not idle (${m.status})` : m.extra ? "waiting: " + m.extra
+      : named ? "an open board item names this member" : JOB_OPEN.test(m.job || "") && !JOB_DONE.test(m.job || "") ? "the board job is still running" : "";
+    m.canCondense = !why;
+    const big = m.ctx >= lim;
+    m.condenseNow = m.canCondense && (big || JOB_DONE.test(m.job || ""));
+    m.condenseWhy = why ? "Not safe now: " + why + "." : big ? `Chat is large (${Math.round(m.ctx / 1000)}k, limit ${Math.round(lim / 1000)}k): condense or restart to save tokens.`
+      : m.condenseNow ? "Job done: condense or restart to save tokens." : "Safe to condense or restart.";
+  }
+}
+/** Condense/Restart request for the leader (CONDENSE <time>.json): type, mode, member, session, context tokens. */
+function condenseRequest(m, mode, requestsFolder) {
+  const dir = expandHome(requestsFolder);
+  if (!dir || !m) return { ok: false, msg: "Not saved: no requests folder or member." };
+  const t = stamp(), body = JSON.stringify({ type: "condense", mode: mode === "restart" ? "restart" : "compact", member: m.display || m.name,
+    session: m.sid || "", contextTokens: m.ctx || 0, time: t.iso, from: "Condense" }, null, 2);
+  try { fs.mkdirSync(dir, { recursive: true }); } catch (e) { return { ok: false, msg: "Not saved: " + ((e && e.message) || e.code || "folder error") }; }
+  for (let n = 1; n <= 20; n++) {
+    const file = `CONDENSE ${t.file}${n > 1 ? " " + n : ""}.json`;
+    try { fs.writeFileSync(path.join(dir, file), body, { encoding: "utf8", flag: "wx" }); return { ok: true, file }; }
+    catch (e) { if (!e || e.code !== "EEXIST") return { ok: false, msg: "Not saved: " + ((e && e.message) || e.code || "write error") }; }
+  }
+  return { ok: false, msg: "Not saved: 20 requests in one second." };
 }
 
 /** Decide: one request file for the leader, who watches the requests folder and asks the question in its own chat. */
@@ -752,5 +1042,82 @@ function findLeaderSession(leader, projectsDir) {
   return null;
 }
 
-module.exports = { buildState, newMemberRequest, editMember, roleInfo, brainInfo, brainFor, createBrain, savePicture, digestRequest,
-  matchAgent, agentIndex, expandHome, decideRequest, findWaiting, normItem, findLeaderSession, _resetLimit: () => { lastRequest = 0; } };
+// ---- 0.5.1 token use today: read from the "usage" field Claude Code writes on each assistant reply in the transcripts.
+// Each reply can be written as several lines with the same message id, so each id is counted once. Nothing is estimated.
+let lastTok = null;
+const tokCache = new Map();   // file -> { since, off, ids:Set, s:{input,output,cacheWrite,cacheRead} }
+const TOK_STEP = 4 * 1048576;
+const midnight = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); };
+/** The byte offset where today's lines start (transcripts are written in time order): steps back 4 MB at a time. */
+function todayOffset(fd, size, since) {
+  let pos = size;
+  while (pos > 0) {
+    const start = Math.max(0, pos - TOK_STEP), len = Math.min(65536, size - start), buf = Buffer.alloc(len);
+    fs.readSync(fd, buf, 0, len, start);
+    const txt = buf.toString("utf8"), nl = start ? txt.indexOf("\n") : -1;
+    const m = /"timestamp":"([^"]+)"/.exec(txt.slice(nl + 1));
+    if (m && Date.parse(m[1]) < since) return start;
+    pos = start;
+  }
+  return 0;
+}
+/** Today's token use in one transcript, read from where the last call stopped. null = no such file. */
+function fileTokens(p, since) {
+  let st;
+  try { st = fs.statSync(p); } catch (e) { return null; }
+  let c = tokCache.get(p);
+  if (!c || c.since !== since || st.size < c.off) c = { since, off: -1, ids: new Set(), s: { input: 0, output: 0, cacheWrite: 0, cacheRead: 0 } };
+  tokCache.set(p, c);
+  if (st.mtimeMs < since) { c.off = st.size; return c; }   // not written today
+  let fd;
+  try {
+    fd = fs.openSync(p, "r");
+    if (c.off < 0) c.off = todayOffset(fd, st.size, since);
+    let rest = "";
+    while (c.off < st.size) {
+      const len = Math.min(TOK_STEP, st.size - c.off), buf = Buffer.alloc(len);
+      fs.readSync(fd, buf, 0, len, c.off);
+      const lastNl = buf.lastIndexOf(0x0a);
+      if (lastNl < 0) { if (len < TOK_STEP) break; rest += buf.toString("utf8"); c.off += len; continue; }   // a line still being written: next time
+      const lines = (rest + buf.slice(0, lastNl).toString("utf8")).split("\n");
+      rest = "";
+      c.off += lastNl + 1;
+      for (const ln of lines) {
+        if (!ln.includes('"usage"') || !ln.includes('"assistant"')) continue;
+        let e; try { e = JSON.parse(ln); } catch (x) { continue; }
+        if (e.type !== "assistant" || !e.message || !e.message.usage || !(Date.parse(e.timestamp) >= since)) continue;
+        const id = e.message.id || e.requestId || e.uuid;
+        if (!id || c.ids.has(id)) continue;
+        c.ids.add(id);
+        const u = e.message.usage;
+        c.s.input += u.input_tokens || 0; c.s.output += u.output_tokens || 0;
+        c.s.cacheWrite += u.cache_creation_input_tokens || 0; c.s.cacheRead += u.cache_read_input_tokens || 0;
+      }
+    }
+  } catch (e) { /* unreadable now: keep what was counted */ } finally { if (fd !== undefined) try { fs.closeSync(fd); } catch (x) { /* closed */ } }
+  return c;
+}
+/** Token use since midnight per card: its open chat (main transcript) plus its helpers' transcripts. known = false when
+ * no transcript of that card was found (no open chat, no helper today). other = helpers that match no card. */
+function tokenUse() {
+  const since = midnight(), zero = () => ({ input: 0, output: 0, cacheWrite: 0, cacheRead: 0, total: 0, chats: 0 });
+  const add = (r, c) => { if (!c) return; for (const k of ["input", "output", "cacheWrite", "cacheRead"]) r[k] += c.s[k]; r.chats++; };
+  if (!lastTok) return { since: new Date(since).toISOString(), rows: [], other: zero(), total: zero(), ready: false };
+  const rows = lastTok.members.map(m => ({ id: m.id, name: m.name, team: m.team, ...zero(), known: false }));
+  const byId = new Map(rows.map(r => [r.id, r])), other = zero();
+  for (const m of lastTok.members) {
+    if (!/^[0-9a-f-]{36}$/i.test(m.sid)) continue;
+    for (const dir of lastTok.dirs) { const c = fileTokens(path.join(dir, m.sid + ".jsonl"), since); if (c) { const r = byId.get(m.id); add(r, c); r.known = true; break; } }
+  }
+  for (const h of lastTok.helpers) {
+    const c = fileTokens(h.p, since), r = h.id && byId.get(h.id);
+    if (r) { add(r, c); if (c) r.known = true; } else add(other, c);
+  }
+  const total = zero();
+  for (const r of [...rows, other]) { r.total = r.input + r.output + r.cacheWrite + r.cacheRead; for (const k of ["input", "output", "cacheWrite", "cacheRead", "chats"]) total[k] += r[k]; }
+  total.total = total.input + total.output + total.cacheWrite + total.cacheRead;
+  return { since: new Date(since).toISOString(), rows, other, total, ready: true };
+}
+
+module.exports = { buildState, newMemberRequest, tokenUse, saveBotify, brainFolder, moveSettings, editMember, roleInfo, brainInfo, brainFor, createBrain, savePicture, digestRequest,
+  matchAgent, agentIndex, expandHome, decideRequest, findWaiting, condenseRequest, contextTokens, condenseInfo, teamList, roleList, joinTeam, leaveTeam, teamGroups, TEAM_COLOURS, normItem, findLeaderSession, _resetLimit: () => { lastRequest = 0; } };

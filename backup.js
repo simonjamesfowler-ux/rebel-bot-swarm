@@ -279,6 +279,13 @@ function cleanMembers(buf) {
     if (typeof v.name === "string" && v.name.length <= 60 && !/[\u0000-\u001f]/.test(v.name)) e.name = v.name;
     if (typeof v.avatar === "string" && /^(style:[a-z0-9-]{1,30}|pic:[A-Za-z0-9 _().-]{1,120})$/.test(v.avatar) && !v.avatar.includes("..")) e.avatar = v.avatar;
     if (typeof v.agent === "string" && /^[A-Za-z0-9][A-Za-z0-9._ -]{0,100}$/.test(v.agent)) e.agent = v.agent;
+    // 0.5.0 teams: the member's team and role (checked against the teams/roles settings when the dashboard reads them)
+    if (typeof v.team === "string" && v.team && v.team.length <= 40 && !/[\u0000-\u001f]/.test(v.team)) e.team = v.team;
+    if (typeof v.role === "string" && v.role && v.role.length <= 40 && !/[\u0000-\u001f]/.test(v.role)) e.role = v.role;
+    // 0.5.1 Add team member: the new card {name, job, time}, plain short text only
+    const a = v.added, txt = (x, n) => typeof x === "string" && x.length <= n && !/[\u0000-\u001f]/.test(x);
+    if (a && typeof a === "object" && !Array.isArray(a) && txt(a.name, 60) && a.name.trim() && txt(a.job || "", 200) && txt(a.time || "", 40))
+      e.added = { name: a.name, job: a.job || "", time: a.time || "" };
     if (Object.keys(e).length) out[k] = e;
   }
   return Buffer.from(JSON.stringify(out, null, 2), "utf8");
@@ -296,6 +303,19 @@ function cleanSettings(buf, schema) {
     else if (s.type === "boolean" && typeof v === "boolean") out[k] = v;
     else if (s.type === "number" && typeof v === "number" && isFinite(v) && (s.minimum === undefined || v >= s.minimum) && (s.maximum === undefined || v <= s.maximum)) out[k] = v;
     else if (s.type === "array" && Array.isArray(v) && v.length <= 200 && v.every(x => typeof x === "string" && x.length <= 100)) out[k] = v;
+    else if (k === "teams" && s.type === "array" && Array.isArray(v) && v.length <= 12) {
+      // 0.5.0 teams: [{name, leader, scope}], plain short text only
+      const ok = x => typeof x === "string" && x.length <= 160 && !/[\u0000-\u001f]/.test(x);
+      const list = v.filter(x => x && typeof x === "object" && !Array.isArray(x) && ok(x.name) && x.name.trim())
+        .map(x => {   // keys kept in the user's own order, so an unchanged team does not read as changed
+          const e = {};
+          for (const k of Object.keys(x)) {
+            if (k === "name" || ((k === "leader" || k === "scope" || k === "parent") && ok(x[k]) && x[k])) e[k] = x[k];   // parent: 0.5.1 sub-teams
+            else if (k === "color" && typeof x.color === "string" && /^#[0-9a-fA-F]{6}$/.test(x.color)) e.color = x.color;   // 0.5.1
+          }
+          return e; });
+      if (list.length === v.length) out[k] = list;
+    }
   }
   return out;
 }
