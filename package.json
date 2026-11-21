@@ -1,8 +1,8 @@
 {
   "name": "rebel-bot-swarm",
   "displayName": "Rebel Bot Swarm",
-  "description": "See your Claude Code sessions as a team: status, original avatars, who holds what, the messages between them, and a card edit panel. Local only.",
-  "version": "0.2.0",
+  "description": "A dashboard for your Claude Code team: status, original avatars, who is working on what, live progress, comms lines between members, member brains and a card edit panel. Local only.",
+  "version": "0.3.0",
   "publisher": "simonjamesfowler-ux",
   "license": "MIT",
   "repository": {
@@ -86,7 +86,7 @@
         "rebelBotSwarm.avatarsFolder": {
           "type": "string",
           "default": "",
-          "description": "Optional folder of your own pictures (.png .jpg .svg) named after members. Empty = drawn avatars only."
+          "description": "Folder of your own pictures (.png .jpg .webp .svg) named after members; Upload picture copies new ones here. Empty = VS Code's storage folder for this extension."
         },
         "rebelBotSwarm.requestsFolder": {
           "type": "string",
@@ -102,6 +102,11 @@
           "type": "boolean",
           "default": false,
           "markdownDescription": "Also show a **ready** card for each agent file in `~/.claude/agents/` that has no card yet (name from the file name, job from its `description:` line)."
+        },
+        "rebelBotSwarm.brainsFolder": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Folder for member brain files (`<member>.md`) shown in the edit panel, when Claude Code's own subagent memory (`memory:` in the agent file) is not used. Empty = VS Code's storage folder for this extension. `~` = your home folder."
         }
       }
     }

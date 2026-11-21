@@ -2,16 +2,30 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rebel Bot Swarm</title>
 <style>
-:root{--bg:#f4f5f7;--card:#fff;--ink:#1d2430;--muted:#6b7580;--line:#dde1e6;--work:#1f9d55;--idle:#8a94a0;--wait:#d97706;--closed:#c4c9cf;--ready:#3b82c4;--accent:#1f3a5f}
-@media (prefers-color-scheme:dark){:root{--bg:#14181e;--card:#1d232b;--ink:#e6e9ed;--muted:#9aa4ae;--line:#2c343e;--closed:#4a535d;--ready:#6fa8dc;--accent:#8fb3e0}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 Segoe UI,Arial,sans-serif}
-header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
-h1{font-size:18px;margin:0;color:var(--accent)}.muted{color:var(--muted)}.slot{padding:4px 10px;border-radius:12px;background:var(--card);border:1px solid var(--line)}
-main{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:16px;padding:16px}
-@media (max-width:900px){main{grid-template-columns:1fr}}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;cursor:pointer;display:flex;gap:10px}
-.card svg{flex:0 0 76px}.card>div{min-width:0}.card:hover{border-color:var(--accent)}.card.grey{opacity:.6}.card.grey .av{filter:grayscale(1)}.card.grey:hover{opacity:.9}
+/* colours: VS Code theme variables first (light, dark and high contrast), own values outside VS Code */
+:root{--bg0:#f4f5f7;--card0:#fff;--ink0:#1d2430;--muted0:#6b7580;--line0:#dde1e6;--accent0:#1f3a5f;--btn0:#1f3a5f;--btnink0:#fff;
+ --link:#2a9df4;--work:#1f9d55;--idle:#8a94a0;--wait:#d97706;--closed:#c4c9cf;--ready:#3b82c4}
+@media (prefers-color-scheme:dark){:root{--bg0:#14181e;--card0:#1d232b;--ink0:#e6e9ed;--muted0:#9aa4ae;--line0:#2c343e;--accent0:#8fb3e0;--btn0:#3a6ea5;--closed:#4a535d;--ready:#6fa8dc}}
+body.vscode-dark,body.vscode-high-contrast{--work:#3fb950;--wait:#e3a23a;--closed:#4a535d;--link:#4fb3ff}
+body{--bg:var(--vscode-editor-background,var(--bg0));--card:var(--vscode-sideBar-background,var(--card0));--ink:var(--vscode-foreground,var(--ink0));
+ --muted:var(--vscode-descriptionForeground,var(--muted0));--line:var(--vscode-panel-border,var(--vscode-widget-border,var(--line0)));
+ --accent:var(--vscode-textLink-foreground,var(--accent0));--btn:var(--vscode-button-background,var(--btn0));--btnink:var(--vscode-button-foreground,var(--btnink0));
+ --tile:var(--vscode-editorWidget-background,var(--bg0))}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.4 var(--vscode-font-family,Segoe UI,Arial,sans-serif)}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+h1{font-size:16px;margin:0;color:var(--ink);letter-spacing:.2px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px;padding:10px 14px 0}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:7px 10px;min-width:0}
+.tile .v{font-size:20px;font-weight:700;line-height:1.15}.tile .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.tile.wide{grid-column:span 2}.tile .s{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.6}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px 10px;margin-bottom:12px}
+.panel>h2{font-size:11px!important;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)!important;margin:0 0 6px!important;display:flex;align-items:center}
+.panel .ww,.panel .feed{border:0;border-radius:0;background:transparent}.panel .card{background:var(--tile)}.muted{color:var(--muted)}.slot{padding:4px 10px;border-radius:12px;background:var(--card);border:1px solid var(--line)}
+main{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:14px;padding:12px 14px}
+@media (max-width:820px){main{grid-template-columns:1fr}}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;position:relative}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px;cursor:pointer;display:flex;gap:6px;align-items:flex-start;position:relative;z-index:1}
+.card svg.av{flex:0 0 40px;width:40px;height:40px}.card>div{min-width:0}.card:hover{border-color:var(--accent)}.card.grey{opacity:.6}.card.grey .av{filter:grayscale(1)}.card.grey:hover{opacity:.9}
 .av .mv{transform-box:fill-box;transform-origin:center}
 .av .blink{animation:blink 5.5s infinite}.av .bub{animation:bob 2s ease-in-out infinite}.av .zz{animation:zz 3s ease-in-out infinite}
 .av .twk{animation:twk 1.6s ease-in-out infinite}.av .twk.d2{animation-delay:.8s}
@@ -40,47 +54,85 @@ main{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:16px
 @keyframes twk{0%,100%{transform:scale(.4) rotate(0);opacity:.2}50%{transform:scale(1) rotate(45deg);opacity:1}}
 @keyframes zz{0%,100%{transform:translate(0,0);opacity:.5}50%{transform:translate(2px,-3px);opacity:1}}
 @media (prefers-reduced-motion:reduce){.av *{animation:none!important}}
-.name{font-weight:600}.status{font-size:12px;font-weight:600}.job{font-size:12px;color:var(--muted);margin-top:4px;max-height:4.2em;overflow:hidden}
-.tag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:8px;background:var(--bg);margin:3px 3px 0 0}
+.name{font-weight:600;font-size:12px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.status{font-size:10.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.job{font-size:10.5px;line-height:1.3;color:var(--muted);margin-top:2px;max-height:2.6em;overflow:hidden}
+.tag{display:inline-block;font-size:10px;padding:0 5px;border-radius:7px;background:var(--bg);margin:2px 2px 0 0}
+.card .hint{font-size:10px;margin-top:1px}
+#teamwrap{position:relative}#links{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;overflow:visible}
+#links .ln{fill:none;stroke:var(--link);stroke-linecap:round}#links .ln.on{stroke-width:2.6;filter:drop-shadow(0 0 3px var(--link))}
+#links .pulse{fill:#fff;filter:drop-shadow(0 0 4px var(--link))}#links .node{fill:none;stroke:var(--link);stroke-width:2}
+#links .ln.dash{stroke-dasharray:6 10;animation:flow 1s linear infinite}@keyframes flow{to{stroke-dashoffset:-16}}
+@media (prefers-reduced-motion:reduce){#links .ln.dash{animation:none;stroke-dasharray:none}#links .pulse{display:none}}
+.grid.net{display:block;height:var(--neth,520px)}.grid.net .card{position:absolute;width:96px;flex-direction:column;align-items:center;text-align:center;gap:2px;padding:3px;transform:translate(-50%,-50%);background:transparent!important;border-color:transparent}.grid.net .card:hover{border-color:var(--line)}
+.grid.net .card .job,.grid.net .card .tag,.grid.net .card .hint{display:none}.grid.net .card>div{width:100%}
+.toggle{font-size:12px;font-weight:400;color:var(--muted);margin-left:10px;cursor:pointer}.toggle input{vertical-align:middle}
+aside section{margin-bottom:12px}.ww{background:var(--card);border:1px solid var(--line);border-radius:10px;max-height:30vh;overflow:auto}
+.ww .row{display:flex;gap:6px;padding:5px 8px;border-bottom:1px solid var(--line);font-size:12px;align-items:flex-start}.ww .row:last-child{border-bottom:0}
+.ww .row svg.av{flex:0 0 26px;width:26px;height:26px}.ww .t{font-size:10.5px;color:var(--muted);white-space:nowrap}.ww .step{color:var(--work);font-weight:600}
+.kind{font-size:10px;padding:0 5px;border-radius:7px;background:var(--bg);color:var(--muted);margin-left:4px}
+.feed{max-height:34vh}
 section h2{font-size:14px;margin:0 0 8px;color:var(--accent)}section{margin-bottom:16px}
-.feed{background:var(--card);border:1px solid var(--line);border-radius:10px;max-height:70vh;overflow:auto}
-.msg{padding:8px 10px;border-bottom:1px solid var(--line);font-size:13px}.msg .hd{font-size:11px;color:var(--muted)}
+.feed{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:auto}
+.msg{padding:5px 8px;border-bottom:1px solid var(--line);font-size:12px}.msg .hd{font-size:11px;color:var(--muted)}
 .wait li{margin-bottom:6px;font-size:13px}
 dialog{border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);max-width:520px}
 code{background:var(--bg);padding:2px 5px;border-radius:4px;user-select:all}
 .hint{font-size:11px;font-weight:600;color:var(--ink);margin-top:3px}
 button{font:inherit;padding:5px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
-button.main{background:var(--accent);color:var(--card);border-color:var(--accent)}#addbtn{margin-left:auto}
+button.main{background:var(--btn);color:var(--btnink);border-color:var(--btn)}#addbtn{margin-left:auto}
 #nmform label{display:block;font-size:12px;font-weight:600;margin:8px 0 3px}
 #nmform input{width:100%;font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
-#nmmsg,#edmsg{font-weight:600;min-height:1.4em}
+#upd{flex:1}#nmmsg,#edmsg{font-weight:600;min-height:1.4em}
 #edform{border-top:1px solid var(--line);margin-top:10px}#edform h4{margin:8px 0 0;color:var(--accent)}
 #edform label{display:block;font-size:12px;font-weight:600;margin:8px 0 3px}
 #edform input,#edform textarea{width:100%;font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
 #edform textarea{resize:vertical}.pick{display:flex;flex-wrap:wrap;gap:6px;max-height:160px;overflow:auto;padding:2px}
 .pick button{padding:2px;border-radius:50%;line-height:0;border:2px solid var(--line);background:var(--bg)}.pick button.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
 .pick svg{width:48px;height:48px}a.lnk{color:var(--accent);cursor:pointer;text-decoration:underline}
-dialog{width:min(560px,94vw)}
+dialog{width:min(600px,94vw);max-height:92vh;padding:0;overflow:auto}#dlgbody,#edform{padding:0 16px}#edform{margin:10px 0 14px}
+.dlgbar{position:sticky;top:0;z-index:3;display:flex;gap:8px;align-items:center;background:var(--card);border-bottom:1px solid var(--line);padding:8px 16px}
+.dlgbar b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--accent)}
+.avsel{position:relative}#avbtn{display:flex;gap:8px;align-items:center;width:100%;text-align:left}#avbtn svg{width:32px;height:32px;flex:0 0 32px}#avlabel{flex:1}
+.avsel .pick{position:absolute;left:0;right:0;top:100%;z-index:4;margin-top:4px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px;max-height:260px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.pick .grp{flex:0 0 100%;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin-top:4px}.pick button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}.pick button.up{border-radius:8px;line-height:1.3;padding:4px 10px;align-self:center}
+pre.brain{white-space:pre-wrap;font:12px/1.4 Consolas,monospace;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;max-height:180px;overflow:auto;margin:4px 0}
+#dgmsg,#brmsg{font-weight:600}
 header .slot{flex:1 1 300px;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 </style></head><body>
-<header><h1>Rebel Bot Swarm</h1><span class="slot" id="slot">Shared slot: -</span><span class="muted" id="upd"></span><button id="addbtn" class="main" type="button">+ Add team member</button></header>
+<header><h1>Rebel Bot Swarm</h1><span class="slot" id="slot" hidden></span><span class="muted" id="upd"></span><button id="addbtn" class="main" type="button">+ Add team member</button></header>
+<div class="stats" id="stats" aria-label="Summary"></div>
 <main>
  <div>
-  <section><h2>Team</h2><div class="grid" id="cards"></div></section>
-  <section><h2>Waiting for you</h2><ul class="wait" id="wait"></ul></section>
+  <section class="panel"><h2>Team <label class="toggle"><input type="checkbox" id="netview"> Network view</label></h2>
+   <div id="teamwrap"><div class="grid" id="cards"></div><svg id="links" aria-hidden="true"></svg></div></section>
+  <section class="panel"><h2>Waiting for you</h2><ul class="wait" id="wait"></ul></section>
  </div>
- <section><h2>Messages between members</h2><div class="feed" id="feed"></div></section>
+ <aside aria-label="Working window">
+  <section class="panel"><h2>Working now</h2><div class="ww" id="wnow"></div></section>
+  <section class="panel"><h2>Progress</h2><div class="ww" id="steps"></div></section>
+  <section class="panel"><h2>Messages between members</h2><div class="feed" id="feed"></div></section>
+  <section class="panel"><h2>Board log</h2><div class="ww" id="blog"></div></section>
+ </aside>
 </main>
-<dialog id="dlg"><div id="dlgbody"></div>
+<dialog id="dlg"><div class="dlgbar"><b id="dlgtitle"></b><button form="edform" class="main edsave" type="submit">Save</button><button class="dlgx" type="button">Close</button></div><div id="dlgbody"></div>
  <form id="edform" autocomplete="off"><h4>Edit this member</h4>
   <label for="edname">Name on the panel (max 60 characters; empty = the session or board name)</label><input id="edname" maxlength="60">
-  <label>Avatar (our own drawings, or your pictures from the avatars folder)</label><div class="pick" id="edpick"></div>
+  <label id="avlbl">Avatar (our own drawings, or your own pictures)</label>
+  <div class="avsel"><button type="button" id="avbtn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="avlbl avlabel"><span id="avcur"></span><span id="avlabel"></span><span aria-hidden="true">&#9662;</span></button>
+  <div class="pick" id="edpick" role="listbox" aria-labelledby="avlbl" hidden></div></div>
   <label for="edtask">Task: what it should do next (one line, max 300 characters)</label><input id="edtask" maxlength="300">
   <label for="edrole">Role instructions (max 6000 characters; saved as a request for your coordinator)</label><textarea id="edrole" rows="9" maxlength="6000"></textarea>
   <div class="muted" id="edinfo"></div>
+  <h4>Brain</h4><div class="muted" id="brinfo"></div><pre class="brain" id="brtext" hidden></pre>
+  <p><a class="lnk" id="bropen" href="#" hidden>Open the brain file in VS Code</a> <button type="button" id="brmake" hidden>Make an empty brain file</button> <span id="brmsg"></span></p>
+  <h4>Digest: give this member something to learn</h4>
+  <label for="dgsrc">Text or a link (max 20000 characters)</label><textarea id="dgsrc" rows="3" maxlength="20000"></textarea>
+  <label for="dgnote">Note for the coordinator (one line, optional)</label><input id="dgnote" maxlength="300">
+  <p><button type="button" id="dgattach">Attach file…</button> <span class="muted" id="dgfile"></span></p>
+  <p><button type="button" id="dgsend">Save digest request</button> <span id="dgmsg"></span></p>
   <p class="muted" style="font-size:11px">Name and avatar change this panel only. Task and role instructions are saved as one request file
   for your coordinator session (<a class="lnk" data-open="1">open the requests folder</a>). The panel never edits the agent files.</p>
-  <p id="edmsg"></p><p><button id="edsend" class="main" type="submit">Save</button> <button id="dlgclose" type="button">Close</button></p></form></dialog>
+  <p id="edmsg"></p><p><button id="edsend" class="main edsave" type="submit">Save</button> <button class="dlgx" type="button">Close</button></p></form></dialog>
 <dialog id="nmdlg"><form id="nmform" method="dialog"><h3>Add team member</h3>
  <p class="muted">This saves one request file for your coordinator session to pick up (<a class="lnk" data-open="1">open the requests folder</a>).</p>
  <label for="nmname">Name (max 60 characters)</label><input id="nmname" maxlength="60" required autocomplete="off">
@@ -216,6 +268,73 @@ function overlay(st){
  if(st==="waiting for you")return `<g class="mv bub"><path d="M70 3 H92 Q98 3 98 9 V21 Q98 27 92 27 H83 L75 34 L77 27 H70 Q64 27 64 21 V9 Q64 3 70 3Z" fill="#fff" ${S(1.9)}/><text x="81" y="22.5" text-anchor="middle" font-size="19" font-weight="800" font-family="Segoe UI,Arial" style="fill:var(--wait)">?</text></g>`;
  if(st==="closed")return `<g class="mv zz" font-family="Segoe UI,Arial" font-weight="800" fill="#c8cede" stroke="${OL}" stroke-width=".6"><text x="74" y="22" font-size="13">z</text><text x="84" y="13" font-size="9">z</text></g>`;
  return ""}
+// REBEL CREW: our own flat geometric faces (no outlines, no shading): big simple shapes, flat skin and hair tones,
+// angular hair and beard blocks, two dot eyes, a bar nose, a plain backdrop; a small prop for the job. Original designs.
+const RSK=["#f3cfae","#e2ae86","#c98d5d","#94603f","#5e3c28"];
+const rq=(x,y,w,h,c,rx=0)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${c}"/>`;
+const rp=(d,c,o="")=>`<path d="${d}" fill="${c}"${o?` opacity="${o}"`:""}/>`;
+const rc=(x,y,r,c)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`;
+const RHAIR={
+ crop:c=>rp("M28 36 L30 24 L44 19 L62 20 L71 27 L72 38 L66 30 L36 30Z",c),
+ part:c=>rp("M27 42 L28 25 L40 18 L66 19 L73 28 L73 42 L69 31 L48 28 L44 33 L33 31Z",c),
+ quiff:c=>rp("M29 36 L31 22 L46 12 L62 14 L58 19 L71 24 L71 36 L64 29 L36 30Z",c),
+ bob:c=>rp("M25 64 L25 30 L36 19 L64 19 L75 30 L75 64 L68 64 L68 36 L56 28 L32 36 L32 64Z",c),
+ long:c=>rp("M23 84 L24 32 L36 18 L64 18 L76 32 L77 84 L68 84 L68 38 L50 27 L32 38 L32 84Z",c),
+ bun:c=>rc(50,15,8,c)+rp("M28 40 L30 25 L42 19 L58 19 L70 25 L72 40 L66 30 L34 30Z",c),
+ sides:c=>rp("M26 50 L26 34 L33 30 L33 50Z",c)+rp("M74 50 L74 34 L67 30 L67 50Z",c),
+ curls:c=>[[26,26],[34,19],[43,15],[52,15],[61,18],[68,24],[23,36],[71,35],[22,47],[72,47],[23,58],[71,58]].map(([x,y])=>rq(x,y,10,10,c,2)).join("")+rq(30,24,40,8,c),
+ buzz:c=>rp("M30 34 L32 25 L44 21 L58 21 L68 25 L70 34 L64 30 L36 30Z",c,".85")};
+const RBEARD={
+ full:c=>rp("M30 56 L34 68 L42 78 L58 78 L66 68 L70 56 L70 64 L62 62 L38 62 L30 64Z",c)+rp("M30 52 L30 64 L38 62 L36 54Z",c)+rp("M70 52 L70 64 L62 62 L64 54Z",c),
+ short:c=>rp("M33 62 L40 72 L60 72 L67 62 L60 66 L40 66Z",c),
+ tache:c=>rp("M40 62 L50 59 L60 62 L58 64.5 L50 62.5 L42 64.5Z",c)};
+function rface(o){const sk=RSK[o.skin],dk=shade(sk,-.12),hair=o.hair||"#2b2118";
+ let s=rq(0,0,100,100,o.bg);
+ s+=rp("M16 100 L22 84 L36 78 L64 78 L78 84 L84 100Z",o.top)+(o.collar?rp("M40 78 L50 92 L60 78Z",o.collar):"");
+ s+=rq(43,64,14,16,dk);
+ if(o.h==="long")s+=RHAIR.long(hair);
+ s+=rq(24,44,6,12,dk,2)+rq(70,44,6,12,dk,2);
+ s+=rp("M30 30 L70 30 L71 58 L60 72 L40 72 L29 58Z",sk);
+ if(o.h&&o.h!=="long")s+=RHAIR[o.h](hair);
+ if(o.beard)s+=RBEARD[o.beard](o.beardc||hair);
+ s+=`<g class="mv blink">${rc(41.5,47,2.8,"#1b1d26")}${rc(58.5,47,2.8,"#1b1d26")}</g>`;
+ s+=rq(48.5,47,3,10,dk,1)+(o.beard==="full"?rq(45,65,10,2.4,"#7a3b33",1):rq(44.5,64,11,2.6,"#7a3b33",1.2));
+ if(o.glasses)s+=rq(34,42,15,10,o.glasses,2)+rq(51,42,15,10,o.glasses,2)+rq(36.5,44.5,10,5,"#fff",1)+rq(53.5,44.5,10,5,"#fff",1)+rq(48,45.5,4,2,o.glasses)+rc(41.5,47,2.4,"#1b1d26")+rc(58.5,47,2.4,"#1b1d26");
+ return s+(o.extra||"")}
+const RCREW={
+ "rc-pilot":{label:"Pilot",bg:"#9fd3e8",skin:0,h:"crop",hair:"#6b3f22",top:"#1f8a8a",collar:"#e9e3d3",
+  extra:rq(27,25,46,5,"#3b3b48")+rc(40,27.5,6,"#3b3b48")+rc(60,27.5,6,"#3b3b48")+rc(40,27.5,3.6,"#7fd6f0")+rc(60,27.5,3.6,"#7fd6f0")},
+ "rc-mechanic":{label:"Mechanic",bg:"#f2c46d",skin:3,h:"",top:"#6b7a3a",collar:"#5a6630",beard:"full",hair:"#1d1712",
+  extra:rp("M27 34 L29 20 L42 14 L58 14 L71 20 L73 34Z","#c8423a")+rq(27,31,46,5,"#a8332d")+
+   rp("M76 74 L82 68 L88 70 L85 74 L88 78 L82 80 L76 74 L66 92 L62 89Z","#9aa3ad")},
+ "rc-engineer":{label:"CAD engineer",bg:"#c9b8f0",skin:2,h:"bob",hair:"#16131a",top:"#3d4f9a",collar:"#d9e0f5",glasses:"#1f2340",
+  extra:rq(60,78,26,19,"#23283d",2)+rq(63,81,20,13,"#5ee0f0")+rp("M66 92 L72 85 L76 89 L81 83","#23283d","")+rp("M80 70 L84 72 L72 94 L69 93Z","#f0b93a")},
+ "rc-drafter":{label:"Drafter",bg:"#bfe3b4",skin:0,h:"bun",hair:"#c2622d",top:"#d8833b",collar:"#f4e7d0",
+  extra:rp("M62 96 L62 74 L84 96Z","#3d6fc9")+rp("M67 92 L67 84 L75 92Z","#bfe3b4")+rp("M71 34 L77 18 L79 19 L73 35Z","#f4c542")},
+ "rc-commander":{label:"Coordinator",bg:"#9ab4e0",skin:1,h:"part",hair:"#c9c9c9",beard:"tache",top:"#24365f",collar:"#c9d3e6",
+  extra:rp("M24 44 L24 32 L36 20 L64 20 L76 32 L76 44 L72 44 L72 33 L62 24 L38 24 L28 33 L28 44Z","#30303a")+rq(21,42,8,14,"#30303a",3)+rq(71,42,8,14,"#30303a",3)+rp("M25 54 L25 60 L40 66 L40 63 L28 58 L28 54Z","#30303a")+rc(41,65,2.6,"#30303a")},
+ "rc-admin":{label:"Admin",bg:"#f5b5c4",skin:3,h:"curls",hair:"#3a2418",top:"#8e3b6b",collar:"#f2d8e4",
+  extra:rq(60,74,22,26,"#a8763e",2)+rq(63,78,16,20,"#fbf7ef")+rq(66,74,10,5,"#5b5b66",1.5)+rq(65,82,12,1.8,"#9aa0ad")+rq(65,86,10,1.8,"#9aa0ad")+rq(65,90,12,1.8,"#9aa0ad")+rq(65,94,7,1.8,"#3d9a5b")},
+ "rc-researcher":{label:"Researcher",bg:"#b8e8dc",skin:0,h:"sides",hair:"#8a6a4a",top:"#f1f3f5",collar:"#6aa0d8",glasses:"#2b2f45",
+  extra:rc(75,80,9,"#2b2f45")+rc(75,80,6,"#d6f3ff")+rp("M68 87 L71 90 L62 99 L59 96Z","#2b2f45")},
+ "rc-teacher":{label:"Teacher",bg:"#f3d9a6",skin:4,h:"buzz",hair:"#bdbdbd",beard:"short",beardc:"#bdbdbd",top:"#8a2f3c",collar:"#f1e3c8",
+  extra:rq(4,70,26,22,"#2f5d46",2)+rq(8,75,9,2,"#e9f1ea")+rq(8,80,15,2,"#e9f1ea")+rq(8,85,11,2,"#e9f1ea")+rp("M30 86 L46 70 L48 72 L32 88Z","#c9a46a")},
+ "rc-assistant":{label:"Personal assistant",bg:"#ffd1a8",skin:1,h:"long",hair:"#e1b85a",top:"#4f7d5a",collar:"#efe7cf",
+  extra:rp("M24 46 L24 34 L36 21 L64 21 L76 34 L76 46 L73 46 L73 35 L62 25 L38 25 L27 35 L27 46Z","#55555f")+rq(21,42,7,13,"#55555f",3)+rq(72,42,7,13,"#55555f",3)+
+   rq(66,82,15,15,"#f4f1ea",2)+rp("M81 85 L86 85 L86 92 L81 92 L81 90 L84 90 L84 87 L81 87Z","#f4f1ea")+rq(68,85,11,3,"#7a4a2a")},
+ "rc-navigator":{label:"Navigator",bg:"#a9c7f5",skin:2,h:"crop",hair:"#241a14",beard:"short",top:"#c79a2b",collar:"#f6ecd0",
+  extra:rp("M27 33 L30 20 L44 15 L58 15 L70 20 L73 33Z","#2a6f9e")+rp("M27 33 L73 33 L84 37 L27 37Z","#1f5579")+
+   rc(77,85,10,"#e8e2d0")+rc(77,85,7.5,"#2a6f9e")+rp("M77 78 L79.5 85 L77 92 L74.5 85Z","#e8e2d0")+rp("M77 78 L79.5 85 L74.5 85Z","#e5484d")}};
+function rbot(o){let s=rq(0,0,100,100,o.bg)+rp("M18 100 L24 82 L76 82 L82 100Z",o.body)+rq(44,70,12,14,o.dark);
+ if(o.kind==="box")s+=rq(47,8,6,14,o.dark)+rc(50,8,5,o.light)+rq(24,24,52,48,o.body,6)+rq(18,40,6,16,o.dark,2)+rq(76,40,6,16,o.dark,2)+
+   rq(30,36,40,16,o.dark,8)+`<g class="mv blink">${rc(41,44,4.2,o.eye)}${rc(59,44,4.2,o.eye)}</g>`+rq(38,58,24,4,o.dark,2)+rq(41,59,4,2,o.eye)+rq(48,59,4,2,o.eye)+rq(55,59,4,2,o.eye)+rq(34,86,10,6,o.light,1)+rq(56,86,10,6,o.eye,1);
+ else s+=rp("M50 12 L76 26 L76 56 L50 70 L24 56 L24 26Z",o.body)+rp("M50 12 L76 26 L50 26 L24 26Z",o.light)+rq(30,34,40,14,o.dark,3)+`<g class="mv blink">${rq(36,38,9,6,o.eye,1.5)}${rq(55,38,9,6,o.eye,1.5)}</g>`+
+   rq(44,54,12,3,o.dark,1.5)+rq(20,32,4,18,o.dark,2)+rq(76,32,4,18,o.dark,2)+rq(14,30,6,4,o.light,1)+rq(80,30,6,4,o.light,1)+rc(50,91,4,o.eye);
+ return s}
+const RBOTS={"rc-droid":{label:"Helper droid",kind:"box",bg:"#d4dbe6",body:"#e8833a",dark:"#2b2f3d",light:"#ffd08a",eye:"#6ff0d4"},
+ "rc-scout":{label:"Scout bot",kind:"hex",bg:"#c6ecd0",body:"#5b6cc7",dark:"#252a44",light:"#9aa8f0",eye:"#ffe066"}};
+const isRebel=k=>!!(RCREW[k]||RBOTS[k]);
+const rebelInner=k=>RCREW[k]?rface(RCREW[k]):rbot(RBOTS[k]);
 function avatar(m){const role=m.style||roleOf(m.name,m.job),h=hash(m.name),k="a"+h.toString(36),st=m.status==="ready"?"idle":m.status,ring=COL[m.status]||"var(--idle)";
  const [hu]=hsl(okc(m.colour));
  const C={k,col:tone(m.colour),light:tone(m.colour,.2),dark:tone(m.colour,-.16),acc:hx([(hu+160)%360,.75,.6])};
@@ -225,6 +344,7 @@ function avatar(m){const role=m.style||roleOf(m.name,m.job),h=hash(m.name),k="a"
   `<clipPath id="cl${k}"><circle cx="50" cy="50" r="46"/></clipPath></defs>`;
  let inner,front="";
  if(m.pic)inner=`<circle cx="50" cy="50" r="46" fill="#0d1530"/><image href="${esc(m.pic)}" x="4" y="4" width="92" height="92" preserveAspectRatio="xMidYMid slice"/>`;
+ else if(isRebel(role))inner=rebelInner(role);
  else if(BOTS[role]){const r=BOTS[role](st,C);inner=space(C,h)+r.in;front=r.front}
  else{const hd=HEADS[HEAD_OF[role]||"human"](C,st,h,role),p=ROLE_ART[role](C);
   inner=space(C,h)+hd.back+suit(C,hd.neck)+(p.pre||"")+hd.head+(p.top||"");front=p.front||""}
@@ -237,26 +357,47 @@ const CLOSED_HINT="Closed: reopen this session to send it work";
 const STYLE_LABEL={crew:"Space crew",coord:"Coordinator",cad:"CAD",draught:"Draughtsman",research:"Researcher",cabinet:"Cabinet maker",teacher:"Teacher",family:"Personal",books:"Books",kitchen:"Kitchen",fitter:"Fitter",postbot:"Post bot",cleanbot:"Clean bot",tablet:"Tablet bot"};
 let edM=null,edAv="auto";
 function pickRender(){const m=edM,base={name:m.name,job:m.job,colour:m.colour,status:"ready",since:"",extra:"",files:[],slot:false};
- const items=[["auto","Automatic (the drawing for its job)",avatar({...base,style:"",pic:""})]];
- for(const s of (last.styles||[]))items.push(["style:"+s,STYLE_LABEL[s]||s,avatar({...base,style:s,pic:""})]);
- for(const p of (last.pics||[]))items.push(["pic:"+p.file,"Picture: "+p.file,avatar({...base,style:"",pic:p.url})]);
- edpick.innerHTML=items.map(([v,t,svg])=>`<button type="button" class="${v===edAv?"sel":""}" data-v="${esc(v)}" title="${esc(t)}" aria-label="${esc(t)}" aria-pressed="${v===edAv}">${svg}</button>`).join("");
- edpick.insertAdjacentHTML("beforeend",(last.pics||[]).length?"":`<span class="muted" style="align-self:center;font-size:11px">${last.avatarsSet?"No pictures in the avatars folder yet (.png .jpg .svg).":"To use your own pictures, set rebelBotSwarm.avatarsFolder."}</span>`)}
-edpick.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;edAv=b.dataset.v;pickRender();edsend.disabled=false;edmsg.textContent=""});
-function edDone(ok,msg){edmsg.textContent=msg;edmsg.style.color=ok?"var(--work)":"var(--wait)";edsend.disabled=ok}
-edform.addEventListener("input",()=>{edsend.disabled=false;edmsg.textContent=""});
+ const itemFor=v=>v.startsWith("style:")?{...base,style:v.slice(6),pic:""}:v.startsWith("pic:")?{...base,style:"",pic:((last.pics||[]).find(p=>"pic:"+p.file===v)||{}).url||""}:{...base,style:"",pic:""};
+ const sl=k=>STYLE_LABEL[k]||(RCREW[k]||RBOTS[k]||{}).label||k;
+ const lab=v=>v==="auto"?"Automatic (the drawing for its job)":v.startsWith("style:")?sl(v.slice(6))+(isRebel(v.slice(6))?" (Rebel crew)":""):"Picture: "+v.slice(4);
+ avcur.innerHTML=avatar(itemFor(edAv));avlabel.textContent=lab(edAv);
+ const st=last.styles||[],btn=([v,t,svg])=>`<button type="button" role="option" tabindex="-1" class="${v===edAv?"sel":""}" data-v="${esc(v)}" title="${esc(t)}" aria-label="${esc(t)}" aria-selected="${v===edAv}">${svg}</button>`;
+ const grp=t=>`<div class="grp" role="presentation">${t}</div>`;
+ const drawn=[["auto","Automatic (the drawing for its job)",avatar({...base,style:"",pic:""})]].concat(st.filter(k=>!isRebel(k)).map(k=>["style:"+k,sl(k),avatar({...base,style:k,pic:""})]));
+ const crew=st.filter(isRebel).map(k=>["style:"+k,sl(k)+" (Rebel crew)",avatar({...base,style:k,pic:""})]);
+ const pics=(last.pics||[]).map(p=>["pic:"+p.file,"Picture: "+p.file,avatar({...base,style:"",pic:p.url})]);
+ edpick.innerHTML=grp("Space crew drawings")+drawn.map(btn).join("")+(crew.length?grp("Rebel crew")+crew.map(btn).join(""):"")+
+  grp("Your pictures")+pics.map(btn).join("")+`<button type="button" class="up" id="upbtn" tabindex="-1" data-up="1">Upload picture…</button>`}
+const opts=()=>[...edpick.querySelectorAll("button")];
+function pickOpen(on){edpick.hidden=!on;avbtn.setAttribute("aria-expanded",String(on));if(on){const o=opts(),i=Math.max(0,o.findIndex(b=>b.classList.contains("sel")));o[i]&&o[i].focus()}}
+avbtn.addEventListener("click",()=>pickOpen(edpick.hidden));
+avbtn.addEventListener("keydown",e=>{if(e.key==="ArrowDown"){e.preventDefault();pickOpen(true)}});
+edpick.addEventListener("keydown",e=>{const o=opts(),i=o.indexOf(document.activeElement);
+ if(e.key==="Escape"){e.preventDefault();e.stopPropagation();pickOpen(false);avbtn.focus();return}
+ const step={ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1}[e.key];
+ if(step){e.preventDefault();o[(i+step+o.length)%o.length].focus()}else if(e.key==="Home"){e.preventDefault();o[0].focus()}else if(e.key==="End"){e.preventDefault();o[o.length-1].focus()}});
+edpick.addEventListener("focusout",e=>{if(!edpick.hidden&&!e.currentTarget.contains(e.relatedTarget)&&e.relatedTarget!==avbtn)pickOpen(false)});
+edpick.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+ if(b.dataset.up){if(VS)VS.postMessage({type:"uploadPic",member:edM.id});edDone(false,"Choose a .png, .jpg or .webp picture (max 2 MB)…");return}
+ edAv=b.dataset.v;pickRender();pickOpen(false);avbtn.focus();edsends(false);edmsg.textContent=""});
+function edsends(dis){for(const b of document.querySelectorAll(".edsave"))b.disabled=dis}
+function edDone(ok,msg){edmsg.textContent=msg;edmsg.style.color=ok?"var(--work)":"var(--wait)";edsends(ok)}
+edform.addEventListener("input",e=>{if(e.target===dgsrc||e.target===dgnote){dgmsg.textContent="";dgsend.disabled=false;return}edsends(false);edmsg.textContent=""});
 function roleIn(d){if(!edM||d.id!==edM.id)return;edrole.disabled=false;
- if(d.found&&!d.too_long){edrole.value=d.body;edinfo.textContent="Filled from the agent file (agent files are only read here)."}
+ if(d.found&&!d.too_long){edrole.value=d.body;edinfo.textContent="Filled from the agent file "+(d.agent||"")+" (agent files are only read here)."}
  else if(d.too_long){edrole.value="";edinfo.textContent="The agent file is longer than "+d.limit+" characters, so the box is empty: write only the change you want."}
  else{edrole.value="";edinfo.textContent="No agent file for this member: write the role here if you want one."}}
 edform.addEventListener("submit",e=>{e.preventDefault();if(!edM)return;
  const data={member:edM.id,name:edname.value.trim(),avatar:edAv,task:edtask.value.trim(),role_instructions:edrole.value};
  if(data.name.length>60||data.task.length>300||data.role_instructions.length>6000){edDone(false,"Too long: name max 60, task max 300, role instructions max 6000 characters.");return}
- edsend.disabled=true;edmsg.textContent="Saving…";edmsg.style.color="";
+ edsends(true);edmsg.textContent="Saving…";edmsg.style.color="";
  if(VS)VS.postMessage({type:"editMember",...data});else edDone(false,"Open this page from VS Code.")});
 document.addEventListener("click",e=>{if(e.target.closest("a[data-open]")&&VS)VS.postMessage({type:"openRequests"})});
 function show(i){const m=last.members[i];if(!m)return;
- edM=m;edAv=m.avatar||"auto";edname.value=m.display||"";edtask.value="";edmsg.textContent="";edsend.disabled=false;edform.hidden=!m.id;pickRender();
+ edM=m;edAv=m.avatar||"auto";edname.value=m.display||"";edtask.value="";edmsg.textContent="";edsends(false);edform.hidden=!m.id;pickRender();pickOpen(false);
+ dlgtitle.textContent=m.display||m.name;for(const b of document.querySelectorAll(".edsave"))b.hidden=!m.id;
+ brinfo.textContent="Reading…";brtext.hidden=true;bropen.hidden=true;brmake.hidden=true;brmsg.textContent="";dgsrc.value="";dgnote.value="";dgfile.textContent="";dgmsg.textContent="";dgsend.disabled=false;
+ if(VS&&m.id)VS.postMessage({type:"getBrain",id:m.id});
  edrole.value="";edrole.disabled=true;edinfo.textContent="Reading the agent file…";if(VS&&m.id)VS.postMessage({type:"getRole",id:m.id});
  dlgbody.innerHTML=`<h3>${esc(m.display||m.name)}${m.display?` <span class="muted" style="font-weight:400;font-size:12px">(${esc(m.name)})</span>`:""}</h3><p>Status: <b>${esc(m.status)}</b> ${esc(m.since)} ${esc(m.extra)}</p>`+
  (m.status==="ready"?`<p><b>Ready.</b> Idle and available: the coordinator starts it as a background helper when a job needs it.</p>`:"")+(m.status==="closed"?`<p><b>${CLOSED_HINT}.</b> A closed tab ends the session: no member can reach it until it is reopened.</p>`:"")+`<p>${esc(m.job)}</p>`+
@@ -264,19 +405,78 @@ function show(i){const m=last.members[i];if(!m)return;
  Or in a terminal: <code>claude --resume ${esc(m.sid)}</code></p>`:`<p>To reopen: in the Claude Code panel, open the past conversations list and pick "${esc(m.name)}" by its title.</p>`)+
  (m.files.length?`<p><b>Files booked:</b><br>${m.files.map(esc).join("<br>")}</p>`:"");dlg.showModal()}
 cards.addEventListener("click",e=>{const c=e.target.closest(".card");if(c)show(+c.dataset.i)});
-dlgclose.addEventListener("click",()=>dlg.close());
-function render(s){last=s;
- slot.textContent="Shared slot: "+(s.holder||"free").replace(/\*/g,"").slice(0,140);upd.textContent="updated "+s.updated+(s.error?"  ERROR "+s.error:"");
+for(const b of document.querySelectorAll(".dlgx"))b.addEventListener("click",()=>dlg.close());
+// BRAIN: the member's own Markdown notes (Claude Code's subagent memory if there is one, else the panel's brains folder)
+function brainIn(d){if(!edM||d.id!==edM.id)return;
+ if(!d.found){brinfo.textContent="No brain file for this member.";return}
+ const where=d.kind==="native"?"Claude Code memory ("+d.scope+" scope)":"Brain file in the brains folder";
+ if(d.private){brinfo.textContent=where+": private member, so no preview here.";bropen.hidden=!d.exists;return}
+ if(!d.exists){brinfo.textContent=where+": not made yet ("+d.file+")."+(d.kind==="panel"?" Tip: add \"memory: user\" to the agent file and Claude Code keeps the member's own MEMORY.md.":"");brmake.hidden=d.kind!=="panel";return}
+ brinfo.textContent=where+": "+d.file;brtext.textContent=d.text||"(empty)";brtext.hidden=false;bropen.hidden=false}
+bropen.addEventListener("click",e=>{e.preventDefault();if(VS&&edM)VS.postMessage({type:"openBrain",id:edM.id})});
+brmake.addEventListener("click",()=>{if(VS&&edM)VS.postMessage({type:"createBrain",id:edM.id})});
+// DIGEST: one request file for the coordinator (text, link and/or a copied file)
+dgattach.addEventListener("click",()=>{if(VS&&edM)VS.postMessage({type:"attachDigest",id:edM.id})});
+dgsend.addEventListener("click",()=>{if(!edM)return;const source=dgsrc.value.trim(),note=dgnote.value.trim();
+ if(!source&&!dgfile.textContent){dgDone(false,"Paste a text or a link, or attach a file.");return}
+ if(source.length>20000||note.length>300){dgDone(false,"Too long: text max 20000, note max 300 characters.");return}
+ dgsend.disabled=true;dgmsg.textContent="Saving…";dgmsg.style.color="";if(VS)VS.postMessage({type:"digest",member:edM.id,source,note})});
+function dgDone(ok,msg){dgmsg.textContent=msg;dgmsg.style.color=ok?"var(--work)":"var(--wait)";dgsend.disabled=ok;if(ok){dgsrc.value="";dgnote.value="";dgfile.textContent=""}}
+function render(s){last=s;const byId={};for(const m of s.members)if(m.id)byId[m.id]=m;
+ const cnt=st=>s.members.filter(m=>st.includes(m.status)).length,today=new Date().toDateString(),isToday=f=>f.ts&&new Date(f.ts).toDateString()===today;
+ const hold=(s.holder||"").replace(/\*/g,"").trim();
+ setHtml(stats,[["Working",cnt(["working"]),"var(--work)"],["Waiting for you",cnt(["waiting for you"])+(s.waiting||[]).length,"var(--wait)"],["Idle or ready",cnt(["idle","ready","closed"]),"var(--idle)"],
+  ["Jobs done today",(s.feed||[]).filter(f=>f.kind==="report"&&isToday(f)).length,""],["Messages today",(s.feed||[]).filter(isToday).length,""]]
+  .map(([l,v,c])=>`<div class="tile"><div class="v" style="${c&&v?"color:"+c:""}">${v}</div><div class="l">${l}</div></div>`).join("")+
+  `<div class="tile wide"><div class="s" title="${esc(hold)}">${esc(hold||"free")}</div><div class="l">Shared slot</div></div>`);
+ upd.textContent="updated "+s.updated+(s.error?"  ERROR "+s.error:"");
  const order={"working":0,"waiting for you":1,"idle":2,"ready":2,"closed":3};
  const idx=s.members.map((m,i)=>i).sort((a,b)=>(order[s.members[a].status]??4)-(order[s.members[b].status]??4));
- const ch=idx.map(i=>{const m=s.members[i],cl=m.status==="closed",gr=cl||m.status==="ready"||m.status==="idle";return `<div class="card ${gr?"grey":""}" data-i="${i}">${avatar(m)}
-  <div><div class="name">${esc(m.display||m.name)}</div><div class="status" style="color:${gr?"var(--idle)":COL[m.status]||"var(--idle)"}">${esc(m.status)}${m.since?" · "+esc(m.since):""}</div>
-  ${cl?`<div class="hint">${CLOSED_HINT}</div>`:""}
+ const ch=idx.map(i=>{const m=s.members[i],cl=m.status==="closed",gr=cl||m.status==="ready"||m.status==="idle";return `<div class="card ${gr?"grey":""}" data-i="${i}" data-id="${esc(m.id||"")}" title="${esc((m.display||m.name)+(m.extra?": "+m.extra:""))}">${avatar(m)}
+  <div><div class="name">${esc(m.display||m.name)}</div><div class="status" style="color:${gr?"var(--idle)":COL[m.status]||"var(--idle)"}">${esc(m.status)}${m.since?" · "+esc(m.since.replace(/^\d+ \w+ /,"")):""}</div>
+  ${cl?`<div class="hint" title="${CLOSED_HINT}">closed: reopen to send work</div>`:""}
   ${m.slot?'<span class="tag">holds the shared slot</span>':""}${m.files.length?`<span class="tag">${m.files.length} file group(s) booked</span>`:""}
   <div class="job">${esc(m.job)}</div></div></div>`}).join("");
  if(ch!==cards._h){cards.innerHTML=ch;cards._h=ch}   // same cards: keep the animations running
  wait.innerHTML=s.waiting.map(w=>`<li>${esc(w.slice(0,260))}${w.length>260?"…":""}</li>`).join("")||"<li class='muted'>Nothing listed</li>";
- feed.innerHTML=s.feed.map(f=>`<div class="msg"><div class="hd">${esc(f.time)} · <b>${esc(f.from)}</b> → <b>${esc(f.to)}</b></div>${esc(f.text)}</div>`).join("")||"<div class='msg muted'>No messages yet</div>";}
+ feed.innerHTML=s.feed.map(f=>`<div class="msg"><div class="hd">${esc(f.time)} · <b>${esc(f.from)}</b> → <b>${esc(f.to)}</b>${f.kind&&f.kind!=="message"?`<span class="kind">${esc(f.kind)}</span>`:""}</div>${esc(f.text)}</div>`).join("")||"<div class='msg muted'>No messages yet</div>";
+ const mini=w=>{const m=byId[w.id];return m?avatar({...m,status:"working"}):""};
+ setHtml(wnow,(s.working||[]).map(w=>`<div class="row">${mini(w)}<div><b>${esc(w.who)}</b> <span class="t">${esc(w.time)}</span><br>${esc(w.task)}${w.step?`<br><span class="step">${esc(w.step)}</span>`:""}</div></div>`).join("")||"<div class='row muted'>Nobody is working now</div>");
+ setHtml(steps,(s.steps||[]).map(x=>`<div class="row"><span class="t">${esc(x.time.replace(/^\d+ \w+ /,""))}</span><div><b>${esc(x.who)}</b>: ${esc(x.text)}</div></div>`).join("")||"<div class='row muted'>No helper steps in the last 24 hours</div>");
+ setHtml(blog,(s.log||[]).map(x=>`<div class="row"><span class="t">${esc(x.date)}</span><div>${x.who?`<b>${esc(x.who)}</b>: `:""}${esc(x.text)}</div></div>`).join("")||`<div class='row muted'>${s.board?"No log lines on the board":"Set rebelBotSwarm.boardFile to show your board log"}</div>`);
+ layoutNet();drawLinks()}
+function setHtml(el,h){if(el._h!==h){el.innerHTML=h;el._h=h}}
+// COMMS LINES: a glowing line with a travelling pulse from the sender's avatar to the receiver's for each new
+// hand-over (brief, report, message), fading after about 15 s; recent links stay faint (network view).
+// No timers while idle: lines are drawn at each refresh; the pulse is a CSS/SVG animation that ends with the line.
+const seen=new Map(),ACTIVE_MS=15000,FAINT_MS=6*3600000,NEW_MS=180000;let firstState=true;
+function centre(id,box){const c=cards.querySelector(`.card[data-id="${CSS.escape(id)}"] svg.av`);if(!c)return null;const r=c.getBoundingClientRect();return [r.left+r.width/2-box.left,r.top+r.height/2-box.top]}
+function drawLinks(){const s=last,now=Date.now(),box=teamwrap.getBoundingClientRect();links.setAttribute("viewBox",`0 0 ${box.width} ${box.height}`);
+ const skew=(s.now||now)-now;let h="";const faint=new Map(),active=[];
+ for(const l of (s.links||[])){const k=l.from+">"+l.to+"@"+l.ts;
+  if(!seen.has(k))seen.set(k,firstState&&(s.now||now)-l.ts>NEW_MS?0:now);
+  const t0=seen.get(k);if(t0&&now-t0<ACTIVE_MS)active.push([l,t0]);
+  const age=(s.now||now)-l.ts,pk=[l.from,l.to].sort().join("|");if(age<FAINT_MS&&(!faint.has(pk)||faint.get(pk)[1]>age))faint.set(pk,[l,age])}
+ firstState=false;
+ const curve=(a,b)=>{const mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2,dx=b[0]-a[0],dy=b[1]-a[1],n=Math.hypot(dx,dy)||1,o=Math.min(60,n*.18);return `M${a[0].toFixed(1)} ${a[1].toFixed(1)} Q${(mx-dy/n*o).toFixed(1)} ${(my+dx/n*o).toFixed(1)} ${b[0].toFixed(1)} ${b[1].toFixed(1)}`};
+ for(const [l,age] of faint.values()){const a=centre(l.from,box),b=centre(l.to,box);if(!a||!b)continue;
+  h+=`<path class="ln" d="${curve(a,b)}" stroke-width="1.4" stroke-opacity="${(.12+.38*(1-age/FAINT_MS)).toFixed(2)}"/>`}
+ for(const [l,t0] of active){const a=centre(l.from,box),b=centre(l.to,box);if(!a||!b)continue;const d=curve(a,b),left=Math.max(1,(ACTIVE_MS-(now-t0))/1000);
+  h+=`<path class="ln on dash" d="${d}"><animate attributeName="stroke-opacity" from="1" to="0.15" dur="${left.toFixed(1)}s" fill="freeze"/></path>`+
+   `<circle class="node" cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" r="23"><animate attributeName="r" values="21;26;21" dur="1.2s" repeatCount="${Math.ceil(left/1.2)}"/></circle>`+
+   `<circle class="pulse" r="3.5"><animateMotion dur="1.6s" repeatCount="${Math.ceil(left/1.6)}" path="${d}"/></circle>`}
+ if(h!==links._h){links.innerHTML=h;links._h=h}}
+// NETWORK VIEW: the cards as nodes on a ring (the busiest in the middle ring), lines between them
+function layoutNet(){const on=netview.checked;cards.classList.toggle("net",on);const cs=[...cards.querySelectorAll(".card")];
+ if(!on){for(const c of cs){c.style.left="";c.style.top=""}return}
+ const w=cards.clientWidth||600,n=cs.length,H=Math.max(380,Math.min(820,120+n*36));cards.style.setProperty("--neth",H+"px");
+ const deg={};for(const l of (last.links||[])){deg[l.from]=(deg[l.from]||0)+1;deg[l.to]=(deg[l.to]||0)+1}
+ const hub=cs.reduce((h,c)=>(deg[c.dataset.id]||0)>(h?deg[h.dataset.id]||0:0)?c:h,null),ring=cs.filter(c=>c!==hub);   // the busiest node in the middle
+ if(hub){hub.style.left=w/2+"px";hub.style.top=H/2+"px"}
+ const rx=Math.max(60,w/2-54),ry=Math.max(60,H/2-44);ring.forEach((c,i)=>{const a=-Math.PI/2+i*2*Math.PI/Math.max(1,ring.length);c.style.left=(w/2+rx*Math.cos(a))+"px";c.style.top=(H/2+ry*Math.sin(a))+"px"})}
+netview.addEventListener("change",()=>{try{localStorage.setItem("rbs.net",netview.checked?"1":"0")}catch(e){}links._h="";layoutNet();drawLinks()});
+try{netview.checked=localStorage.getItem("rbs.net")==="1"}catch(e){}
+let rz=0;new ResizeObserver(()=>{clearTimeout(rz);rz=setTimeout(()=>{if(last.members){links._h="";layoutNet();drawLinks()}},150)}).observe(teamwrap);
 // ADD TEAM MEMBER: one request file in the requests folder (your setting, or VS Code's storage folder for this extension)
 addbtn.addEventListener("click",()=>{nmmsg.textContent="";nmsend.disabled=false;nmdlg.showModal();nmname.focus()});
 nmcancel.addEventListener("click",()=>nmdlg.close());
@@ -286,7 +486,11 @@ nmform.addEventListener("submit",async e=>{e.preventDefault();const name=nmname.
  if(name.length>60||job.length>200){nmDone(false,"Too long: name max 60, job max 200 characters.");return}
  nmsend.disabled=true;nmmsg.textContent="Saving…";nmmsg.style.color="";
  if(VS)VS.postMessage({type:"newMember",name,job});else nmDone(false,"Open this page from VS Code.")});
-if(VS){window.addEventListener("message",e=>{const d=e.data||{};if(d.type==="state"&&d.state&&d.state.members)render(d.state);else if(d.type==="newMemberResult")nmDone(!!d.ok,String(d.msg||""));else if(d.type==="role")roleIn(d);else if(d.type==="editResult")edDone(!!d.ok,String(d.msg||""))});
+if(VS){window.addEventListener("message",e=>{const d=e.data||{};if(d.type==="state"&&d.state&&d.state.members)render(d.state);else if(d.type==="newMemberResult")nmDone(!!d.ok,String(d.msg||""));else if(d.type==="role")roleIn(d);else if(d.type==="editResult")edDone(!!d.ok,String(d.msg||""));
+ else if(d.type==="brain")brainIn(d);else if(d.type==="brainResult"){brmsg.textContent=String(d.msg||"");brmsg.style.color=d.ok?"var(--work)":"var(--wait)"}
+ else if(d.type==="uploadResult"){if(d.ok&&edM&&d.member===edM.id){edAv="pic:"+d.file;pickRender();edsends(false)}edmsg.textContent=String(d.msg||"");edmsg.style.color=d.ok?"var(--work)":"var(--wait)"}
+ else if(d.type==="attachResult"){if(edM&&d.id===edM.id){dgfile.textContent=d.name?String(d.name):"";dgsend.disabled=false;dgmsg.textContent=d.msg?String(d.msg):""}}
+ else if(d.type==="digestResult")dgDone(!!d.ok,String(d.msg||""))});
  VS.postMessage({type:"ready"})}
 else upd.textContent="Open this page from VS Code (Rebel Bot Swarm: Show).";
 </script></body></html>
