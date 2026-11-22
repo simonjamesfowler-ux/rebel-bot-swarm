@@ -338,8 +338,8 @@ function runningElsewhere(skip) {
   }
   return out;
 }
-/** The card for a helper's agentType when no agent file matched: the card id equal to the type ("gold-2"), else the
- *  type's first part ("babu-frik" -> "babu", "gold-leader" -> "gold"). */
+/** The card for a helper's agentType when no agent file matched: the card id equal to the type ("dev-2"), else the
+ *  type's first part ("ada-lovelace" -> "ada", "red-leader" -> "red"). */
 function cardForType(members, type) {
   const t = String(type || "").trim().toLowerCase();
   if (!t) return null;
@@ -600,7 +600,7 @@ function brainInfo(mid, opts, hidden) {
   }
   return { id: mid, found: true, file: b.file, kind: b.kind, scope: b.scope, exists: b.exists, private: !!hidden, text };
 }
-/** 0.5.1 "Open brain folder" (Simon, 21 Nov): the folder of the member's brain. When it is not there yet it is made,
+/** 0.5.1 "Open brain folder" (21 Nov): the folder of the member's brain. When it is not there yet it is made,
  * with an empty MEMORY.md (or the panel's brain file), never over a file. Returns { ok, dir, made, msg }. */
 function brainFolder(mid, opts) {
   const b = brainFor(mid, opts);

@@ -505,7 +505,7 @@ async function decide(k, item) {
     const req = core.decideRequest(it, folder, { boardFile: c.boardFile, members });
     if (!req.ok) return fail(`Decide: request file not saved in ${folder || "(no requests folder)"}: ${req.msg}`);
     log(`Decide request file saved: ${path.join(core.expandHome(folder), req.file)}`);
-    // 2. 0.5.3 (Simon, option 1): while the leader's chat is running it watches the requests folder, so no tab opens.
+    // 2. 0.5.3 (option 1): while the leader's chat is running it watches the requests folder, so no tab opens.
     const lc = members.find(x => x.leader), setId = String(vscode.workspace.getConfiguration("rebelBotSwarm").get("leaderSessionId", "") || "").trim();
     let live = null;
     try { live = core.leaderLive([lead, lc && lc.display, lc && String(lc.name || "").split(" - ")[0]], [setId, lc && lc.sid], folder); } catch (e) { log("Decide: live check failed: " + ((e && e.stack) || e)); }
@@ -765,7 +765,7 @@ function activate(context) {
       sidePush();
       if (!panel) return;
       // 0.5.1: reload the page only when the folders it may read change; any other setting (leader name, teams...) just
-      // refreshes the state, so an open pop-out and its "Saved" message are not wiped (Simon: the pop-out vanished on Save)
+      // refreshes the state, so an open pop-out and its "Saved" message are not wiped (the pop-out vanished on Save)
       if (["avatarsFolder", "membersFile", "requestsFolder"].some(k => e.affectsConfiguration("rebelBotSwarm." + k))) {
         panel.webview.options = { enableScripts: true, localResourceRoots: roots(cfg()) };
         panel.webview.html = html(panel.webview);

@@ -11,7 +11,7 @@ and on the dashboard until you hide it):
    it. Or use the **Rebel Bot Swarm** icon in the activity bar (left edge: buttons and a 3-line status), the keys
    **Ctrl+Alt+S** (Windows, Linux), or the command **Rebel Bot Swarm: Toggle dashboard**.
 2. **Name your leader, then press OPEN:** type your team leader's name in **Start here** (default "Coordinator").
-   The **OPEN** button (it shows the name on the leader's card, for example OPEN OBI) opens a new Claude Code chat with a starter prompt in the
+   The **OPEN** button (it shows the name on the leader's card, for example OPEN COORDINATOR) opens a new Claude Code chat with a starter prompt in the
    chat box. Press Enter, then say what you want to do. The chat hands the task to the right member (a subagent from
    `~/.claude/agents`) or writes a request file for your coordinator.
 3. **Close chat tabs when the job is handed over:** the dashboard keeps watching your team.

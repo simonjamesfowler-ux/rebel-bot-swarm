@@ -116,7 +116,7 @@ form select,#edform select,.botctl select{-webkit-appearance:none;appearance:non
 pre.brain{white-space:pre-wrap;font:12px/1.4 Consolas,monospace;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;max-height:180px;overflow:auto;margin:4px 0}
 #dgmsg,#brmsg{font-weight:600}
 header .slot{flex:1 1 0;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}header{flex-wrap:nowrap}header>h1,#startchip{flex:none;white-space:nowrap}@media (max-width:640px){#upd{display:none}header>h1{font-size:14px}}#upd{flex:0 1000 auto;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.hgrp{margin-left:auto;flex:0 1 auto;min-width:0;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:6px}.hgrp button{white-space:nowrap}.hgrp button.sec{padding:3px 10px;font-size:12px;background:transparent}#sparkbtn{margin-left:0;font-size:1em;padding:5px 14px;border-radius:16px}
-/* 0.5.1 small buttons (Simon 21 Nov: "the buttons on top can be smaller"): one row, 32px tall, 12px text; Spark is the main one by its colour only */
+/* 0.5.1 small buttons (21 Nov: "the buttons on top can be smaller"): one row, 32px tall, 12px text; Spark is the main one by its colour only */
 .hgrp{flex-wrap:nowrap;gap:5px}.hgrp button,.hgrp button.sec,#sparkbtn{display:inline-block;vertical-align:middle;height:32px;padding:0 10px;font-size:12px;line-height:30px;border-radius:6px;box-shadow:none}#sparkbtn{font-weight:600;padding:0 12px}#sparkbtn:hover,#sparkbtn:focus-visible{box-shadow:0 0 0 2px color-mix(in srgb,var(--btn) 45%,transparent)}.hgrp button.add{border-color:var(--btn);color:var(--ink)}.hgrp .sm{display:none}.hgrp button[hidden]{display:none}
 .tokpop{position:absolute;top:calc(100% + 4px);right:14px;z-index:20;width:min(420px,calc(100vw - 28px));max-height:70vh;overflow:auto;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);box-shadow:0 8px 24px rgba(0,0,0,.3);font-size:12px}.tokpop[hidden]{display:none}.wt+.sent{display:inline-block;margin-left:6px;padding:0 6px;border-radius:8px;font-size:11px;font-weight:600;color:var(--work);border:1px solid var(--work);white-space:nowrap}.stats.stats{flex-wrap:wrap;overflow-x:visible}@media (max-width:820px){body main{grid-template-columns:minmax(0,1fr)}}   /* 0.5.1: the figure boxes wrap on narrow windows: nothing scrolls sideways */
 .orph{border:1px solid var(--wait);border-radius:8px;padding:8px 10px;margin:4px 0 10px;font-size:12px}.orph[hidden]{display:none}.orph h4{margin:0 0 4px}.orow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:5px 0}.orow .ok{flex:1 1 180px;min-width:0}.orow select{width:auto;min-width:150px;max-width:220px}
@@ -469,7 +469,7 @@ for(const b of document.querySelectorAll(".dlgx"))b.addEventListener("click",()=
 // BRAIN: the member's own Markdown notes (Claude Code's subagent memory if there is one, else the panel's brains folder)
 function brainIn(d){if(!edM||d.id!==edM.id)return;
  if(!d.found){brinfo.textContent="No brain file for this member.";brfold.hidden=true;return}
- // 0.5.1 (Simon, 21 Nov): the line is just the link "Brain Folder"; the tooltip has the full path; a click opens the
+ // 0.5.1 (21 Nov): the line is just the link "Brain Folder"; the tooltip has the full path; a click opens the
  // folder in Explorer (and makes it, with an empty MEMORY.md, when it is not there yet)
  const dir=String(d.file||"").replace(/[\\/][^\\/]*$/,""),fn=String(d.file||"").split(/[\\/]/).pop();
  brinfo.textContent="";brmake.hidden=true;
@@ -553,7 +553,7 @@ function groupCards(s,idx,cardH){const ts=s.teams||[];if(!ts.length)return idx.m
 // No timers while idle: lines are drawn at each refresh; the pulse is a CSS/SVG animation that ends with the line.
 const seen=new Map(),ACTIVE_MS=15000,FAINT_MS=6*3600000,NEW_MS=180000;let firstState=true;
 function centre(id,box){const c=cards.querySelector(`.card[data-id="${CSS.escape(id)}"] svg.av`);if(!c)return null;const r=c.getBoundingClientRect();return [r.left+r.width/2-box.left,r.top+r.height/2-box.top]}
-// 0.5.1 network lines: each end sits at the left or right end of the member's name bar (Simon: "lines should lead to
+// 0.5.1 network lines: each end sits at the left or right end of the member's name bar (asked: "lines should lead to
 // the bar only"), leaves it sideways, and the route is the candidate curve that crosses the fewest avatars (ideally none).
 function barEnds(id,box){const c=cards.querySelector(`.card[data-id="${CSS.escape(id)}"] .name`);if(!c)return null;const r=c.getBoundingClientRect();if(!r.width)return null;
  const y=r.bottom-1-box.top;return {l:[r.left-box.left-2,y],r:[r.right-box.left+2,y],x:r.left+r.width/2-box.left}}
@@ -577,7 +577,7 @@ function drawLinks(){const s=last,now=Date.now(),box=teamwrap.getBoundingClientR
   const t0=seen.get(k);if(t0&&now-t0<ACTIVE_MS)active.push([l,t0]);
   const age=(s.now||now)-l.ts,pk=[l.from,l.to].sort().join("|");if(age<FAINT_MS&&(!faint.has(pk)||faint.get(pk)[1]>age))faint.set(pk,[l,age])}
  firstState=false;
- // 0.5.1: lines belong to Network view only; card view clears the overlay (Simon, 21 Nov: lines stayed on the cards)
+ // 0.5.1: lines belong to Network view only; card view clears the overlay (21 Nov: lines stayed on the cards)
  if(!netview.checked){if(links.innerHTML!==""){links.innerHTML=""}links._h="";return}
  const curve=(a,b)=>{const mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2,dx=b[0]-a[0],dy=b[1]-a[1],n=Math.hypot(dx,dy)||1,o=Math.min(60,n*.18);return `M${a[0].toFixed(1)} ${a[1].toFixed(1)} Q${(mx-dy/n*o).toFixed(1)} ${(my+dx/n*o).toFixed(1)} ${b[0].toFixed(1)} ${b[1].toFixed(1)}`};
  const fs=faces(box);
