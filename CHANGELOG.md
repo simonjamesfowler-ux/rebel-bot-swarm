@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.5
+- **A helper that is given more work lights up again.** A helper woken with a new message after its report used to
+  stay "finished" for good, because its old report was still in its record. Now a report counts only when it is
+  the last thing the helper did.
+
 ## 0.5.4
 - **Decide goes to your leader's own chat.** While the leader's chat is running, Decide opens no tab: it writes
   "DECIDE <time>.json" in the requests folder (item, raised_by, the board line as its id, board, section, time); the

@@ -258,14 +258,20 @@ function helperInfo(p, st) {
   const bm = /"content":"((?:[^"\\]|\\.)*)/.exec(head), brief = bm ? jsonString(bm[1]) : "";
   const tm = /"timestamp":"([^"]+)"/.exec(head), you = (/\bYou are ([A-Z][\w'-]*(?: [A-Z][\w'-]*)?)/.exec(brief) || [])[1] || "";
   const steps = [];
-  let handback = null, lastText = null, lastTs = "";
+  let handback = null, lastText = null, lastTs = "", resumeTs = "";
   const lines = tail.split("\n");
   if (st.size > ACT_TAIL) lines.shift();
   for (const line of lines) {
-    if (!line.includes('"type":"assistant"')) continue;
+    // 0.5.5: a user line with words (not only tool results) is a new message to the helper: a resume (SendMessage)
+    if (!line.includes('"type":"assistant"') && !line.includes('"type":"user"')) continue;
     let e;
     try { e = JSON.parse(line); } catch (x) { continue; }
-    if (e.type !== "assistant" || !e.timestamp) continue;
+    if (e && e.type === "user" && e.timestamp) {
+      const c = (e.message || {}).content;
+      if (typeof c === "string" ? c.trim() : Array.isArray(c) && c.some(x => x && x.type === "text" && String(x.text || "").trim())) resumeTs = e.timestamp;
+      continue;
+    }
+    if (!e || e.type !== "assistant" || !e.timestamp) continue;
     lastTs = e.timestamp;
     for (const item of ((e.message || {}).content || [])) {
       if (!item) continue;
@@ -276,8 +282,12 @@ function helperInfo(p, st) {
   }
   const m = meta && typeof meta === "object" ? meta : {};
   const hb = handback || (m.finished === true && lastText) || null;
+  // 0.5.5: finished only when the hand-back (or, with meta "finished", the last text) is the LATEST thing: no later
+  // step and no later resume. A helper resumed with SendMessage keeps its old hand-backs in the tail and is working.
+  const latest = x => !!x && x.ts >= lastTs && !(resumeTs && resumeTs > x.ts);
+  const finished = latest(handback) || (m.finished === true && latest(lastText));
   const i = { agentType: typeof m.agentType === "string" ? m.agentType : "", builtIn: m.isBuiltIn === true, hasMeta: !!meta,
-              task: typeof m.description === "string" ? oneLine(m.description, LINE_MAX) : "", finished: m.finished === true || !!handback,
+              task: typeof m.description === "string" ? oneLine(m.description, LINE_MAX) : "", finished,
               you, brief: oneLine(brief, LINE_MAX), briefTs: tm ? tm[1] : "", steps: steps.slice(-6), lastTs,
               handback: hb ? { ts: hb.ts, text: oneLine(hb.text, LINE_MAX) } : null };
   actCache.set(p, { m: st.mtimeMs, s: st.size, i });
